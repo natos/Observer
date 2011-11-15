@@ -1,0 +1,9 @@
+.pointer {
+	border-radius: 20px;
+	-webkit-transition-property: width, height;  
+	-webkit-transition-duration: .05s;
+}
+
+.clicked {
+	-webkit-transition-property: width, height, top, left;  
+}
