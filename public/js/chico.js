@@ -1,10 +1,10 @@
 /*
- * Chico UI 0.7.9-1 MIT Licence
- * @autor <chico@mercadolibre.com>
- * @link http://www.chico-ui.com.ar
- * @team Natan Santolo, Hernan Mammana, Leandro Linares, Guillermo Paz, Natalia Devalle
- */
-;(function($){undefined/**
+* Chico UI 0.9.1 MIT Licence
+* @autor <chico@mercadolibre.com>
+* @link http://www.chico-ui.com.ar
+* @team Hernan Mammana, Leandro Linares, Guillermo Paz, Natalia Devalle
+*/
+;(function($){/**
 * Chico-UI namespace
 * @namespace ch
 * @name ch
@@ -18,7 +18,7 @@ var ch = window.ch = {
 	* @type number
 	* @memberOf ch
 	*/
-	version: "0.7.9",
+	version: "0.9.1",
 	/**
 	* Here you will find a map of all component's instances created by Chico-UI.
 	* @name instances
@@ -61,35 +61,34 @@ var ch = window.ch = {
 		document: $(document),
 		zIndex: 1000,
 		index: 0, // global instantiation index
-		isTag: function(string){
-			return (/<([\w:]+)/).test(string);
+		isTag: function (tag) {
+			var el = document.createElement(tag)
+			return !(el instanceof HTMLUnknownElement);
 		},
-		isSelector: function(string){
-			if (typeof string !== "string") return false;
-			for (var regex in $.expr.match){
-				if ($.expr.match[ regex ].test(string) && !ch.utils.isTag(string)) {
-					return true;
-				};
-			};
-			return false;
+		isSelector: function (selector) {
+			if (typeof selector !== "string") { return false; }
+			var style = document.createElement("style");
+			style.innerHTML = selector + "{}";
+			document.body.appendChild(style);
+			var ret = !!style.sheet.cssRules[0];
+			document.body.removeChild(style);
+			return ret;
 		},
 		inDom: function (selector, context) {
 			if (typeof selector !== "string") return false;
-
 			// jQuery: If you wish to use any of the meta-characters ( such as !"#$%&'()*+,./:;<=>?@[\]^`{|}~ ) as a literal part of a name, you must escape the character with two backslashes: \\.
-			var selector = selector.replace(/(\!|\"|\$|\%|\&|\'|\(|\)|\*|\+|\,|\/|\;|\<|\=|\>|\?|\@|\[|\\|\]|\^|\`|\{|\||\}|\~)/gi, function(str, $1){
+			var selector = selector.replace(/(\!|\"|\$|\%|\&|\'|\(|\)|\*|\+|\,|\/|\;|\<|\=|\>|\?|\@|\[|\\|\]|\^|\`|\{|\||\}|\~)/gi, function (str, $1) {
 				return "\\\\" + $1;
 			});
-
 			return $(selector, context).length > 0;
 		},
-		isArray: function( o ) {
-			return Object.prototype.toString.apply( o ) === "[object Array]";
+		isArray: function (o) {
+			return Object.prototype.toString.apply(o) === "[object Array]";
 		},
-		isUrl: function(url){
+		isUrl: function (url) {
 			return ((/^((http(s)?|ftp|file):\/{2}(www)?|www.|((\/|\.{1,2})([\w]|\.{1,2})*\/)+|(\.\/|\/|\:\d))([\w\-]*)?(((\.|\/)[\w\-]+)+)?([\/?]\S*)?/).test(url));
 		},
-		avoidTextSelection: function(){
+		avoidTextSelection: function () {
 			$.each(arguments, function(i, e){
 				if ( $.browser.msie ) {
 					$(e).attr('unselectable', 'on');
@@ -108,17 +107,17 @@ var ch = window.ch = {
 		getStyles: function (element, style) {
 			// Main browsers
 			if (window.getComputedStyle) {
-				
+
 				return getComputedStyle(element, "").getPropertyValue(style);
-			
+
 			// IE
 			} else {
-				
+
 				// Turn style name into camel notation
 				style = style.replace(/\-(\w)/g, function (str, $1) { return $1.toUpperCase(); });
-				
+
 				return element.currentStyle[style];
-				
+
 			}
 		}
 	},
@@ -541,89 +540,1701 @@ ch.extend = function (klass) {
 	"use strict";
 
 	return {
-	as: function (name, process) {
-		// Create the component in Chico-UI namespace
-		ch[name] = function (conf) {
-			// Some interfaces need a data value,
-			// others simply need to be 'true'.
-			//conf[name] = conf.value || true;
-
-			// Invoke pre-proccess if is defined,
-			// or grab the raw conf argument,
-			// or just create an empty object.
-			conf = (process) ? process(conf) : conf || {};
-
-			// Here we recieve messages,
-			// or create an empty object.
-			conf.messages = conf.messages || {};
-
-			// If the interface recieve a 'msg' argument,
-			// store it in the message map.
-			if (ch.utils.hasOwn(conf, "msg")) {
-				conf.messages[name] = conf.msg;
-				conf.msg = null;
-				delete conf.msg;
-			}
-			// Here is where the magic happen,
-			// invoke the class with the new conf,
-			// and return the instance to the namespace.
-			return ch[klass].call(this, conf);
-		};
-		// Almost done, now we need expose the new component,
-		// let's ask the factory to do it for us.
-		ch.factory(name);
-	} // end as method
+		as: function (name, process) {
+			// Create the component in Chico-UI namespace
+			ch[name] = function (conf) {
+				// Some interfaces need a data value,
+				// others simply need to be 'true'.
+				conf[name] = conf.value || true;
+	
+				// Invoke pre-proccess if is defined,
+				// or grab the raw conf argument,
+				// or just create an empty object.
+				conf = (process) ? process(conf) : conf || {};
+	
+				// Here we recieve messages,
+				// or create an empty object.
+				conf.messages = conf.messages || {};
+	
+				// If the interface recieve a 'msg' argument,
+				// store it in the message map.
+				if (ch.utils.hasOwn(conf, "msg")) {
+					conf.messages[name] = conf.msg;
+					conf.msg = null;
+					delete conf.msg;
+				}
+				// Here is where the magic happen,
+				// invoke the class with the new conf,
+				// and return the instance to the namespace.
+				return ch[klass].call(this, conf);
+			};
+			// Almost done, now we need expose the new component,
+			// let's ask the factory to do it for us.
+			ch.factory(name);
+		} // end as method
 	} // end return
 };
 
-/** 
-* UI feedback utility, creates a visual highlight
-* changing background color from yellow to white.
-* @function
-* @name blink
-* @param {selector} selector CSS Selector to blink a collection
-* @param {number} [time] Amount of time to blink
-* @returns jQuery
+/**
+* Abstract class
+* @abstract
+* @name Controllers
+* @class Controllers 
+* @augments ch.Uiobject
 * @memberOf ch
+* @returns itself
+* @see ch.Accordion
+* @see ch.Carousel
+* @see ch.Form
 */
-ch.blink = function (conf) {
 
+ch.controllers = function(){
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @name ch.Controllers#that
+	* @type object
+	*/ 
+	var that = this;
+		
+	/**
+	*  Inheritance
+	*/
+	that = ch.uiobject.call(that);
+	that.parent = ch.clon(that);
+	
+ 
+	/**
+	* Collection of children elements.
+	* @name ch.Controllers#children
+	* @type collection
+	*/ 
+	that.children = [];
+			
+	/**
+	*  Public Members
+	*/	
+		
+	return that;
+};
+/**
+* Abstract class of all floats UI-Objects.
+* @abstract
+* @name ch.Floats
+* @class Floats
+* @augments ch.Uiobject
+* @requires ch.Positioner
+* @returns itself
+* @see ch.Tooltip
+* @see ch.Layer
+* @see ch.Modal
+*/
+
+ch.floats = function () {
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @protected
+	* @name ch.Floats#that
+	* @type object
+	*/
 	var that = this,
-		// Hex start level toString(16).
-		level = 1, 
-		// Time, 200 miliseconds by default.
-		t = conf.value || 200,
-		// Inner highlighter.
-		highlight = function (e) {
-			// Let know everyone we are active.
-			that.$element.addClass("ch-active");
-			// Color iteration.
-			function step () {
-				// New hex level.
-				var h = level.toString(16);
-				// Change background-color, redraw().
-				e.style.backgroundColor = '#FFFF' + h + h;
-				// Itearate for all hex levels.
-				if (level < 15) {
-					// Increment hex level.
-					level += 1;
-					// Inner recursion.
-					setTimeout(step, t);
-				} else {
-					// Stop right there...
-					that.$element.removeClass("ch-active");
-				}
+		conf = that.conf;
+
+/**
+* Inheritance
+*/
+
+	that = ch.uiobject.call(that);
+	that.parent = ch.clon(that);
+
+/**
+* Private Members
+*/
+
+	/**
+	* Creates a 'cone', is a visual asset for floats.
+	* @private
+	* @function
+	* @deprecated
+	* @name ch.Floats#createCone
+	*/
+
+	/**
+	* Creates close button.
+	* @private
+	* @function
+	* @deprecated
+	* @name ch.Floats#createClose
+	*/
+
+/**
+* Protected Members
+*/
+	/**
+	* Flag that indicates if the float is active and rendered on the DOM tree.
+	* @protected
+	* @name ch.Floats#active
+	* @type boolean
+	*/
+	that.active = false;
+
+	/**
+	* Content configuration property.
+	* @protected
+	* @name ch.Floats#source
+	* @type string
+	*/
+	that.source = conf.content || conf.msg || conf.ajax || that.element.href || that.$element.parents("form").attr("action");
+
+	/**
+	* Inner function that resolves the component's layout and returns a static reference.
+	* @protected
+	* @name ch.Floats#$container
+	* @type jQuery
+	*/
+	that.$container = (function () { // Create Layout
+		
+		// Final jQuery Object
+		var $container,
+		
+		// Component with close button and keyboard binding for close
+			closable = ch.utils.hasOwn(conf, "closeButton") && conf.closeButton,
+		
+		// HTML Div Element with role for WAI-ARIA
+			container = ["<div role=\"" + conf.aria.role + "\""];
+			
+		// ID for WAI-ARIA
+		if (ch.utils.hasOwn(conf.aria, "identifier")) {
+			
+			// Generated ID using component name and its instance order
+			var id = "ch-" + that.type + "-" + (ch.utils.hasOwn(ch.instances, that.type) ? ch.instances[that.type].length + 1 : "1");
+			
+			// Add ID to container element
+			container.push(" id=\"" + id + "\"");
+			
+			// Add aria attribute to trigger element
+			that.$element.attr(conf.aria.identifier, id);
+		}
+		
+		// Classname with component type and extra classes from conf.classes
+		container.push(" class=\"ch-" + that.type + (ch.utils.hasOwn(conf, "classes") ? " " + conf.classes : "") + "\"");
+		
+		// Z-index
+		container.push(" style=\"z-index:" + (ch.utils.zIndex += 1) + ";");
+		
+		// Width
+		if (ch.utils.hasOwn(conf, "width")) {
+			container.push("width:" + conf.width + ((typeof conf.width === "number") ? "px;" : ";"));
+		}
+		
+		// Height
+		if (ch.utils.hasOwn(conf, "height")) {
+			container.push("height:" + conf.height + ((typeof conf.height === "number") ? "px;" : ";"));
+		}
+		
+		// Style and tag close
+		container.push("\">");
+		
+		// Create cone
+		if (ch.utils.hasOwn(conf, "cone")) { container.push("<div class=\"ch-cone\"></div>"); }
+		
+		// Create close button
+		if (closable) { container.push("<div class=\"btn close\" style=\"z-index:" + (ch.utils.zIndex += 1) + "\"></div>"); }
+		
+		// Tag close
+		container.push("</div>");
+		
+		// jQuery Object generated from string
+		$container = $(container.join(""));
+		
+		// Close behavior bindings
+		if (closable) {
+			// Close button event delegation
+			$container.bind("click", function (event) {
+				if ($(event.target || event.srcElement).hasClass("close")) { that.innerHide(event); }
+			});
+			
+			// ESC key support
+			ch.utils.document.bind(ch.events.KEY.ESC, function (event) { that.innerHide(event); });
+		}
+		
+		// Efects configuration
+		conf.fx = ch.utils.hasOwn(conf, "fx") ? conf.fx : true;
+
+		// Position component configuration
+		conf.position = conf.position || {};
+		conf.position.element = $container;
+		conf.position.reposition = ch.utils.hasOwn(conf, "reposition") ? conf.reposition : true;
+
+		// Initialize positioner component
+		that.position = ch.positioner(conf.position);
+
+		// Return the entire Layout
+		return $container;
+	})();
+
+	/**
+	* Inner reference to content container. Here is where the content will be added.
+	* @protected
+	* @name ch.Floats#$content
+	* @type jQuery
+	* @see ch.Object#content
+	*/
+	that.$content = $("<div class=\"ch-" + that.type + "-content\">").appendTo(that.$container);
+
+	/**
+	* This callback is triggered when async data is loaded into component's content, when ajax content comes back.
+	* @protected
+	* @function
+	* @name ch.Floats#contentCallback
+	* @returns itself
+	*/
+	that["public"].on("contentLoad", function (event, context) {
+		that.$content.html(that.staticContent);
+
+		if (ch.utils.hasOwn(conf, "onContentLoad")) {
+			conf.onContentLoad.call(context, that.staticContent);
+		}
+
+		that.position("refresh");
+	});
+
+	/**
+	* This callback is triggered when async request fails.
+	* @protected
+	* @name ch.Floats#contentError
+	* @function
+	* @returns {this}
+	*/
+	that["public"].on("contentError", function (event, data) {
+
+		that.$content.html(that.staticContent);
+
+		// Get the original that.source
+		var originalSource = that.source;
+
+		if (ch.utils.hasOwn(conf, "onContentError")) {
+			conf.onContentError.call(data.context, data.jqXHR, data.textStatus, data.errorThrown);
+		}
+
+		// Reset content configuration
+		that.source = originalSource;
+		that.staticContent = undefined;
+
+		if (ch.utils.hasOwn(conf, "position")) {
+		   ch.positioner(conf.position);
+		}
+
+	});
+
+	/**
+	* Inner show method. Attach the component layout to the DOM tree.
+	* @protected
+	* @function
+	* @name ch.Floats#innerShow
+	* @returns itself
+	*/
+	that.innerShow = function (event) {
+		if (event) {
+			that.prevent(event);
+		}
+
+		// Avoid showing things that are already shown
+		if (that.active) return;
+
+		// Add layout to DOM tree
+		// Increment zIndex
+		that.$container
+			.appendTo("body")
+			.css("z-index", ch.utils.zIndex++);
+
+		// This make a reflow, but we need that the static content appends to DOM
+		// Get content
+		that.content();
+
+		/**
+		* Triggers when component is visible.
+		* @name ch.Floats#show
+		* @event
+		* @public
+		*/
+		// Show component with effects
+		if (conf.fx) {
+			that.$container.fadeIn("fast", function () {
+				// new callbacks
+				that.trigger("show");
+				// Old callback system
+				that.callbacks('onShow');
+			});
+		} else {
+		// Show component without effects
+			that.$container.removeClass("ch-hide");
+			// new callbacks
+			that.trigger("show");
+			// Old callback system
+			that.callbacks('onShow');
+		}
+
+		that.position("refresh");
+		
+		that.active = true;
+
+		return that;
+	};
+
+	/**
+	* Inner hide method. Hides the component and detach it from DOM tree.
+	* @protected
+	* @function
+	* @name ch.Floats#innerHide
+	* @returns itself
+	*/
+	that.innerHide = function (event) {
+
+		if (event) {
+			that.prevent(event);
+		}
+
+		if (!that.active) {
+			return;
+		}
+
+		var afterHide = function () {
+
+			that.active = false;
+
+		/**
+		* Triggers when component is not longer visible.
+		* @name ch.Floats#hide
+		* @event
+		* @public
+		*/
+			// new callbacks
+			that.trigger("hide");
+			// Old callback system
+			that.callbacks('onHide');
+
+			that.$container.detach();
+
 		};
-		// Begin steps.
-		setTimeout(step, t);
-	}
-	// Start a blink if the element isn't active.
-	if (!that.$element.hasClass("ch-active")) {
-		highlight(that.element);
-	}
-	// Return the element so keep chaining things.
-	return that.$element;
+
+		// Show component with effects
+		if (conf.fx) {
+			that.$container.fadeOut("fast", afterHide);
+
+		// Show component without effects
+		} else {
+			that.$container.addClass("ch-hide");
+			afterHide();
+		}
+
+		return that;
+
+	};
+
+	/**
+	* Getter and setter for size attributes on any float component.
+	* @protected
+	* @function
+	* @name ch.Floats#size
+	* @param {String} prop Property that will be setted or getted, like "width" or "height".
+	* @param {String} [data] Only for setter. It's the new value of defined property.
+	* @returns itself
+	*/
+	that.size = function (prop, data) {
+		// Getter
+		if (!data) { return that.conf[prop]; }
+
+		// Setter
+		that.conf[prop] = data;
+
+		// Container size
+		that.$container[prop](data);
+
+		// Refresh position
+		that.position("refresh");
+
+		return that["public"];
+	};
+
+
+/**
+* Public Members
+*/
+
+	/**
+	* Triggers the innerShow method, returns the public scope to keep method chaining and sets new content if receive a parameter.
+	* @public
+	* @function
+	* @name ch.Floats#show
+	* @returns itself
+	* @see ch.Floats#content
+	*/
+	that["public"].show = function (content) {
+		if (content !== undefined) { that["public"].content(content); }
+		that.innerShow();
+		return that["public"];
+	};
+
+	/**
+	* Triggers the innerHide method and returns the public scope to keep method chaining.
+	* @public
+	* @function
+	* @name ch.Floats#hide
+	* @returns itself
+	*/
+	that["public"].hide = function () {
+		that.innerHide();
+		return that["public"];
+	};
+	
+	/**
+	* Sets or gets positioning configuration. Use it without arguments to get actual configuration. Pass an argument to define a new positioning configuration.
+	* @public
+	* @name ch.Uiobject#position
+	* @example
+	* // Change component's position.
+	* me.position({ 
+	*	  offset: "0 10",
+	*	  points: "lt lb"
+	* });
+	* @see ch.Uiobject#position
+	*/
+	// Create a custom Positioner object to update conf.position data of Float family
+	that["public"].position = function (o) {
+
+		var r = that["public"];
+
+		switch (typeof o) {
+		// Custom Setter: It updates conf.position data
+		case "object":
+			// New points
+			if (ch.utils.hasOwn(o, "points")) { conf.position.points = o.points; }
+
+			// New reposition
+			if (ch.utils.hasOwn(o, "reposition")) { conf.position.reposition = o.reposition; }
+
+			// New offset (splitted)
+			if (ch.utils.hasOwn(o, "offset")) { conf.position.offset = o.offset.split(" "); }
+
+			// New context
+			if (ch.utils.hasOwn(o, "context")) { conf.position.context = o.context; }
+
+			// Original Positioner
+			that.position(conf.position);
+
+			break;
+
+		// Refresh
+		case "string":
+			that.position("refresh");
+			
+			break;
+
+		// Getter
+		case "undefined":
+		default:
+			r = that.position();
+			
+			break;
+		}
+
+		return r;
+	};
+
+	/**
+	* Sets or gets the width property of the component's layout. Use it without arguments to get the value. To set a new value pass an argument, could be a Number or CSS value like '300' or '300px'.
+	* @public
+	* @function
+	* @name ch.Floats#width
+	* @returns itself
+	* @see ch.Floats#size
+	* @example
+	* // to set the width
+	* me.width(700);
+	* @example
+	* // to get the width
+	* me.width // 700
+	*/
+	that["public"].width = function (data) {
+		return that.size("width", data) || that["public"];
+	};
+
+	/**
+	* Sets or gets the height of the Float element.
+	* @public
+	* @function
+	* @name ch.Floats#height
+	* @returns itself
+	* @see ch.Floats#size
+	* @example
+	* // to set the height
+	* me.height(300);
+	* @example
+	* // to get the height
+	* me.height // 300
+	*/
+	that["public"].height = function (data) {
+		return that.size("height", data) || that["public"];
+	};
+
+	/**
+	* Returns a Boolean if the component's core behavior is active. That means it will return 'true' if the component is on and it will return false otherwise.
+	* @public
+	* @function
+	* @name ch.Floats#isActive
+	* @returns boolean
+	*/
+	that["public"].isActive = function () {
+		return that.active;
+	};
+	
+	/**
+	* Triggers when the component is ready to use.
+	* @name ch.Floats#ready
+	* @event
+	* @public
+	* @example
+	* // Following the first example, using 'me' as modal's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	that.trigger("ready");
+
+	return that;
+
+};
+/**
+* Abstract representation of navs components.
+* @abstract
+* @name Navs
+* @class Navs
+* @standalone
+* @augments ch.Uiobject
+* @memberOf ch
+* @param {object} conf Object with configuration properties
+* @returns itself
+* @see ch.Dropdown
+* @see ch.Expando
+*/
+
+ch.navs = function () {
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @private
+	* @name ch.Navs#that
+	* @type object
+	*/ 
+	var that = this,
+		conf = that.conf;
+	
+	conf.icon = ch.utils.hasOwn(conf, "icon") ? conf.icon : true;
+	conf.open = conf.open || false;
+	conf.fx = conf.fx || false;
+
+/**
+*	Inheritance
+*/
+
+	that = ch.uiobject.call(that);
+	that.parent = ch.clon(that);
+	
+/**
+*	Protected Members
+*/
+	/**
+	* Status of component
+	* @protected
+	* @name ch.Navs#active
+	* @returns boolean
+	*/
+	that.active = false;
+
+	/**
+	* Shows component's content.
+	* @protected
+	* @name ch.Navs#show
+	* @returns itself
+	*/
+	that.show = function (event) {
+		that.prevent(event);
+
+		if (that.active) {
+			return that.hide(event);
+		}
+		
+		that.active = true;
+
+		that.$trigger.addClass("ch-" + that.type + "-trigger-on");
+		/**
+		* onShow callback function
+		* @name ch.Navs#onShow
+		* @event
+		*/
+		// Animation
+		if (conf.fx) {
+			that.$content.slideDown("fast", function () {
+				//that.$content.removeClass("ch-hide");
+			
+				// new callbacks
+				that.trigger("show");
+				// old callback system
+				that.callbacks("onShow");
+			});
+		} else {
+			that.$content.removeClass("ch-hide");
+			// new callbacks
+			that.trigger("show");
+			// old callback system
+			that.callbacks("onShow");
+		}
+		
+		return that;
+	};
+	/**
+	* Hides component's content.
+	* @protected
+	* @name ch.Navs#hide
+	* @returns itself
+	*/
+	that.hide = function (event) {
+		that.prevent(event);
+		
+		if (!that.active) { return; }
+		
+		that.active = false;
+		
+		that.$trigger.removeClass("ch-" + that.type + "-trigger-on");
+		/**
+		* onHide callback function
+		* @name ch.Navs#onHide
+		* @event
+		*/
+		// Animation
+		if (conf.fx) {
+			that.$content.slideUp("fast", function () {
+				//that.$content.addClass("ch-hide");
+				that.callbacks("onHide");
+			});
+		} else {
+			that.$content.addClass("ch-hide");
+			// new callbacks
+			that.trigger("hide");
+			// old callback system
+			that.callbacks("onHide");
+		}
+		
+		return that;
+	};
+
+	/**
+	* Create component's layout
+	* @protected
+	* @name ch.Navs#createLayout
+	*/
+	that.configBehavior = function () {
+		that.$trigger
+			.addClass("ch-" + that.type + "-trigger")
+			.bind("click", function (event) { that.show(event); });
+
+		that.$content.addClass("ch-" + that.type + "-content ch-hide");
+
+		// Visual configuration
+		if (conf.icon) { $("<span class=\"ico\">Drop</span>").appendTo(that.$trigger); }
+		if (conf.open) { that.show(); }
+
+	};
+	
+/**
+*	Default event delegation
+*/
+	that.$element.addClass("ch-" + that.type);
+
+	/**
+	* Triggers when component is visible.
+	* @name ch.Navs#show
+	* @event
+	* @public
+	* @example
+	* me.on("show",function () {
+	*	this.content("Some new content");
+	* });
+	* @see ch.Floats#event:show
+	*/
+
+	/**
+	* Triggers when component is not longer visible.
+	* @name ch.Navs#hide
+	* @event
+	* @public
+	* @example
+	* me.on("hide",function () {
+	*	otherComponent.show();
+	* });
+	* @see ch.Floats#event:hide
+	*/
+
+	return that;
 }
+/**
+* Object represent the abstract class of all Objects.
+* @abstract
+* @name Object
+* @class Object
+* @memberOf ch
+* @see ch.Controllers
+* @see ch.Floats
+* @see ch.Navs
+* @see ch.Watcher
+*/
+
+ch.object = function(){
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @private
+	* @name ch.Object#that
+	* @type object
+	*/
+	var that = this;
+
+	var conf = that.conf;
+
+/**
+*	Public Members
+*/
+
+	/**
+	* This method will be deprecated soon. Triggers a specific callback inside component's context.
+	* @name ch.Object#callbacks
+	* @function
+	* @protected
+	*/
+	// TODO: Add examples!!!
+	that.callbacks = function(when, data) {
+		if( ch.utils.hasOwn(conf, when) ) {
+			var context = ( that.controller ) ? that.controller["public"] : that["public"];
+			return conf[when].call( context, data );
+		};
+	};
+
+	/**
+	* Triggers a specific event within the component public context.
+	* @name ch.Object#trigger
+	* @function
+	* @protected
+	* @param {string} event The event name you want to trigger.
+	* @since version 0.7.1
+	*/
+	that.trigger = function(event, data) {
+		$(that["public"]).trigger("ch-"+event, data);
+	};
+
+	/**
+	* Component's public scope. In this scope you will find all public members.
+	*/
+	that["public"] = {};
+
+	/**
+	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
+	* @public
+	* @name ch.Object#uid
+	* @type number
+	* @ignore
+	*/
+	that["public"].uid = that.uid;
+
+	/**
+	* Reference to a DOM Element. This binding between the component and the HTMLElement, defines context where the component will be executed. Also is usual that this element triggers the component default behavior.
+	* @public
+	* @name ch.Object#element
+	* @type HTMLElement
+	* @ignore
+	*/
+	that["public"].element = that.element;
+
+	/**
+	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
+	* @public
+	* @name ch.Object#type
+	* @type string
+	* @ignore
+	*/
+	that["public"].type = that.type;
+	
+	/**
+	* Triggers a specific event within the component public context.
+	* @name ch.Object#trigger
+	* @function
+	* @public
+	* @param {string} event The event name you want to trigger.
+	* @since version 0.7.1
+	*/
+	that["public"].trigger = function(event, data) {
+		$(that["public"]).trigger("ch-"+event, data);
+	};
+	
+	/**
+	* Triggers a specific event within the component public context.
+	* @name ch.Object#trigger
+	* @function
+	* @protected
+	* @param {string} event The event name you want to trigger.
+	* @since version 0.7.1
+	*/
+	that["public"].trigger = that.trigger;
+
+	/**
+	* Add a callback function from specific event.
+	* @public
+	* @function
+	* @name ch.Object#on
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.7.1
+	* @example
+	* // Will add a event handler to the "ready" event
+	* me.on("ready", startDoingStuff);
+	*/
+
+	that["public"].on = function(event, handler) {
+		if (event && handler) {
+			$(that["public"]).bind("ch-"+event, handler);
+		}
+		return that["public"];
+	};
+
+	/**
+	* Add a callback function from specific event.
+	* @public
+	* @function
+	* @name ch.Object#once
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.8.0
+	* @example
+	* // Will add a event handler to the "contentLoad" event once
+	* me.once("contentLoad", startDoingStuff);
+	*/
+	that["public"].once = function(event, handler) {
+
+		if (event && handler) {
+			$(that["public"]).one("ch-"+event, handler);
+		}
+
+		return that["public"];
+	};
+
+	/**
+	* Removes a callback function from specific event.
+	* @public
+	* @function
+	* @name ch.Object#off
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.7.1
+	* @example
+	* // Will remove event handler to the "ready" event
+	* var startDoingStuff = function () {
+	*     // Some code here!
+	* };
+	*
+	* me.off("ready", startDoingStuff);
+	*/
+	that["public"].off = function(event, handler) {
+		if (event && handler) {
+			$(that["public"]).unbind("ch-"+event, handler);
+		} else if (event) {
+			$(that["public"]).unbind("ch-"+event);
+		}
+		return that["public"];
+	};
+
+	return that;
+};/**
+* Object represent the abstract class of all UI Objects.
+* @abstract
+* @name Uiobject
+* @class Uiobject
+* @augments ch.Object
+* @memberOf ch
+* @see ch.Controllers
+* @see ch.Floats
+* @see ch.Navs
+* @see ch.Watcher
+*/
+
+ch.uiobject = function(){
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @private
+	* @name ch.Uiobject#that
+	* @type object
+	*/
+	var that = this;
+
+	var conf = that.conf;
+	
+
+/**
+*	Inheritance
+*/
+
+	that = ch.object.call(that);
+	that.parent = ch.clon(that);
+
+
+
+/**
+*	Public Members
+*/
+
+	/**
+	* Component static content.
+	* @public
+	* @name ch.Uiobject#staticContent
+	* @type string
+	*/
+	that.staticContent;
+
+	/**
+	* DOM Parent of content, this is useful to attach DOM Content when float is hidding.
+	* @public
+	* @name ch.Uiobject#DOMParent
+	* @type HTMLElement
+	*/
+	that.DOMParent;
+
+	/**
+	* Component original content.
+	* @public
+	* @name ch.Uiobject#originalContent
+	* @type HTMLElement
+	*/
+	that.originalContent;
+
+	/**
+	* Set and get the content of a component. With no arguments will behave as a getter function. Send any kind of content and will be a setter function. Use a valid URL for AJAX content, use a CSS selector for a DOM content or just send a static content like HTML or Text.
+	* @name ch.Uiobject#content
+	* @protected
+	* @function
+	* @param {string} [content] Could be a simple text, html or a url to get the content with ajax.
+	* @returns {string} content
+	* @requires ch.Cache
+	* @example
+	* // Simple static content
+	* $(element).layer().content("Some static content");
+	* @example
+	* // Get DOM content
+	* $(element).layer().content("#hiddenContent");
+	* @example
+	* // Get AJAX content
+	* $(element).layer().content("http://chico.com/content/layer.html");
+	*/
+	that.content = function(content) {
+
+		var _get = (content) ? false : true,
+
+			// Local argument
+			content = content,
+			// Local isURL
+			sourceIsUrl = ch.utils.isUrl(that.source),
+			// Local isSelector
+			sourceIsSelector = ch.utils.isSelector(that.source),
+			// Local inDom
+			sourceInDom = (!sourceIsUrl) ? ch.utils.inDom(that.source) : false,
+			// Get context, could be a single component or a controller
+			context = ( ch.utils.hasOwn(that, "controller") ) ? that.controller : that["public"],
+			// undefined, for comparison.
+			undefined,
+			// Save cache configuration
+			cache = ( ch.utils.hasOwn(conf, "cache") ) ? conf.cache : true;
+
+		/**
+		* Get content
+		*/
+
+		// return defined content
+		if (_get) {
+
+			// no source, no content
+			if (that.source === undefined) {
+				that.staticContent = "<p>No content defined for this component</p>";
+				that.trigger("contentLoad");
+
+				return;
+			}
+
+			// First time we need to get the content.
+			// Is cache is off, go and get content again.
+			// Yeap, recursive.
+			if (!cache || that.staticContent === undefined) {
+				that.content(that.source);
+				return;
+			}
+
+			// Get data from cache if the staticContent was defined
+			if (cache && that.staticContent) {
+				var fromCache = ch.cache.get(that.source);
+
+				// Load content from cache
+				if (fromCache && that.staticContent != fromCache) {
+					that.staticContent = fromCache;
+
+					that.trigger("contentLoad");
+
+					// Return and load content from cache
+					return;
+				}
+
+				// Return and show the latest content that was loaded
+				return;
+			}
+		}
+
+		/**
+		* Set content
+		*/
+
+		// Reset cache to overwrite content
+		conf.cache = false;
+
+		// Local isURL
+		var isUrl = ch.utils.isUrl(content),
+			// Local isSelector
+			isSelector = ch.utils.isSelector(content),
+			// Local inDom
+			inDom = (!isUrl) ? ch.utils.inDom(content) : false;
+
+		/* Evaluate static content*/
+
+		// Set 'that.staticContent' and overwrite 'that.source'
+		// just in case you want to update DOM or AJAX Content.
+
+		that.staticContent = that.source = content;
+
+		/* Evaluate AJAX content*/
+
+		if (isUrl) {
+
+			// First check Cache
+			// Check if this source is in our cache
+			if (cache) {
+				var fromCache = ch.cache.get(that.source);
+				if (fromCache) {
+					conf.cache = cache;
+					that.staticContent = fromCache;
+					that.trigger("contentLoad", context);
+					return;
+				}
+			}
+
+			var _method, _serialized, _params = "x=x";
+
+			// If the trigger is a form button, serialize its parent to send data to the server.
+			if (that.$element.attr('type') == 'submit') {
+				_method = that.$element.parents('form').attr('method') || 'GET';
+				_serialized = that.$element.parents('form').serialize();
+				_params = _params + ((_serialized != '') ? '&' + _serialized : '');
+			};
+
+			// Set ajax config
+			// On IE (6-7) "that" reference losts for second time
+			// Why?? I don't know... but with a setTimeOut() works fine!
+			setTimeout(function(){
+
+				$.ajax({
+					url: that.source,
+					type: _method || 'GET',
+					data: _params,
+					// each component could have a different cache configuration
+					cache: cache,
+					async: true,
+					beforeSend: function(jqXHR){
+						// Ajax default HTTP headers
+						jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+					},
+					success: function(data, textStatus, jqXHR){
+						// Save data as staticContent
+						that.staticContent = data;
+
+						// Use the contentLoad callback.
+						that.trigger("contentLoad", context);
+
+						// Save new staticContent to the cache
+						if (cache) {
+							ch.cache.set(that.source, that.staticContent);
+						}
+
+					},
+					error: function(jqXHR, textStatus, errorThrown){
+						that.staticContent = "<p>Error on ajax call.</p>";
+
+						var data = {
+							"context": context,
+							"jqXHR": jqXHR,
+							"textStatus": textStatus,
+							"errorThrown": errorThrown
+						};
+
+						// Use the contentError callback.
+						that.trigger("contentError", data);
+					}
+				});
+
+			}, 0);
+
+			// Return Spinner and wait for async callback
+			that.$content.html("<div class=\"loading\"></div>");
+			that.staticContent = undefined;
+
+		} else {
+
+			/* Evaluate DOM content*/
+
+			if (isSelector && inDom) {
+
+				// Save original DOMFragment.
+				that.originalContent = $(content);
+
+				// Save DOMParent, so we know where to re-insert the content.
+				that.DOMParent = that.originalContent.parent();
+
+				// Save a clone to original DOM content
+				that.staticContent = that.originalContent.clone().removeClass("ch-hide");
+
+			}
+
+			// Save new data to the cache
+			if (cache) {
+				ch.cache.set(that.source, that.staticContent);
+			}
+
+			// First time we need to set the callbacks that append and remove the original content.
+			if (that.originalContent && that.originalContent.selector == that.source) {
+
+				// Remove DOM content from DOM to avoid ID duplications
+				that["public"].on("show", function() {
+					that.originalContent.detach();
+				});
+
+				// Returns DOMelement to DOM
+				that["public"].on("hide", function(){
+					that.originalContent.appendTo(that.DOMParent||"body");
+				});
+			}
+		}
+
+		/* Set previous cache configuration*/
+		conf.cache = cache;
+
+		// trigger contentLoad callback for DOM and Static content.
+		if (that.staticContent !== undefined) {
+			that.trigger("contentLoad", context);
+		}
+
+	};
+
+	/**
+	* Prevent propagation and default actions.
+	* @name ch.Uiobject#prevent
+	* @function
+	* @protected
+	* @param {event} event Recieves a event object
+	*/
+	that.prevent = function(event) {
+
+		if (event && typeof event == "object") {
+			event.preventDefault();
+			event.stopPropagation();
+		};
+
+		return that;
+	};
+
+/**
+*	Public Members
+*/
+	
+	/**
+	* Component's public scope. In this scope you will find all public members.
+	*/
+
+	/**
+	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
+	* @public
+	* @name ch.Uiobject#uid
+	* @type number
+	* @ignore
+	*/
+
+	/**
+	* Reference to a DOM Element. This binding between the component and the HTMLElement, defines context where the component will be executed. Also is usual that this element triggers the component default behavior.
+	* @public
+	* @name ch.Uiobject#element
+	* @type HTMLElement
+	* @ignore
+	*/
+
+	/**
+	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
+	* @public
+	* @name ch.Uiobject#type
+	* @type string
+	* @ignore
+	*/
+
+	/**
+	* Sets and gets component content. To get the defined content just use the method without arguments, like 'me.content()'. To define a new content pass an argument to it, like 'me.content("new content")'. Use a valid URL to get content using AJAX. Use a CSS selector to get content from a DOM Element. Or just use a String with HTML code.
+	* @public
+	* @name ch.Uiobject#content
+	* @function
+	* @param {string} content Static content, DOM selector or URL. If argument is empty then will return the content.
+	* @example
+	* // Get the defined content
+	* me.content();
+	* @example
+	* // Set static content
+	* me.content("Some static content");
+	* @example
+	* // Set DOM content
+	* me.content("#hiddenContent");
+	* @example
+	* // Set AJAX content
+	* me.content("http://chico.com/some/content.html");
+	*/
+	that["public"].content = function(content){
+		if (content) { // sets
+			// Reset content data
+			that.source = content;
+			that.staticContent = undefined;
+
+			if (that.active) {
+				that.content(content);
+			}
+
+			return that["public"];
+
+		} else { // gets
+			return that.staticContent;
+		}
+	};
+	
+	/**
+	* Triggers a specific event within the component public context.
+	* @name ch.Object#trigger
+	* @function
+	* @public
+	* @param {string} event The event name you want to trigger.
+	* @since version 0.7.1
+	*/
+	
+	/**
+	* Add a callback function from specific event.
+	* @public
+	* @function
+	* @name ch.Object#on
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.7.1
+	* @example
+	* // Will add a event handler to the "ready" event
+	* me.on("ready", startDoingStuff);
+	*/
+
+	/**
+	* Add a callback function from specific event once.
+	* @public
+	* @function
+	* @name ch.Object#once
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.8.0
+	* @example
+	* // Will add a event handler to the "contentLoad" event once
+	* me.once("contentLoad", startDoingStuff);
+	*/
+
+	/**
+	* Removes a callback function from specific event.
+	* @public
+	* @function
+	* @name ch.Object#off
+	* @param {string} event Event name.
+	* @param {function} handler Handler function.
+	* @returns itself
+	* @since version 0.7.1
+	* @example
+	* // Will remove event handler to the "ready" event
+	* me.off("ready", startDoingStuff);
+	*/
+
+	return that;
+};/**
+* Validator is a validation engine for html forms elements.
+* @abstract
+* @name Validator
+* @class Validator
+* @augments ch.Object
+* @requires ch.Condition
+* @memberOf ch
+* @param {Object} conf Object with configuration properties.
+* @param {Object} conf.conditions Object with conditions.
+* @returns itself
+* @see ch.Condition
+*/
+
+ch.validator = function(conf) {
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @protected
+	* @name ch.Validator#that
+	* @type Object
+	*/
+	var that = this;
+	conf = ch.clon(conf);
+	that.conf = conf;	
+
+/**
+* Inheritance
+*/
+
+	that = ch.object.call(that);
+	that.parent = ch.clon(that);
+
+/**
+* Private Members
+*/
+	var conditions = (function(){
+		var c = {}; // temp collection
+		var condition = ch.condition.call(that["public"], conf.condition);
+
+		c[condition.name] = condition;
+
+		// return all the configured conditions
+		return c;
+	})(); // Love this ;)
+
+	/**
+	* Search for instances of Validators with the same trigger, and then merge it's properties with it.
+	* @private
+	* @name ch.Validator#checkInstance
+	* @function
+	* @returns Object
+	*/
+	var checkInstance;
+	if (checkInstance = function() {
+
+		var instance, instances = ch.instances.validator;
+		if ( instances && instances.length > 0 ) {
+			for (var i = 0, j = instances.length; i < j; i+=1) {
+				instance = instances[i];
+
+				if (instance.element !== that.element) {
+
+					continue;
+				}
+
+				// Extend instance's conditions
+				instance.extend(conditions);
+
+				// To let know the ch.Factory that already exists,
+				// this way we avoid to have duplicated references.
+				return {
+					exists: true,
+					object: instance
+				}
+			}
+		}
+	}()){
+		return checkInstance;
+	};
+
+	var validate = function(value) {
+
+		if (!that.enabled) { return true; }
+
+		var condition, tested, empty, val, message, required = conditions["required"];
+
+		// Avoid fields that aren't required when they are empty or de-activated
+		if (!required && value === "" && that.active === false) { return {"status": true}; }
+
+		if (that.enabled && (!that.active || value !== "" || required)) {
+			/**
+			* Triggers before start validation process.
+			* @name ch.Validator#beforeValidate
+			* @event
+			* @public
+			* @example
+			* me.on("beforeValidate",function(){
+			*	submitButton.disable();
+			* });
+			*/
+			// old callback system
+			that.callbacks('beforeValidate');
+			// new callback
+			that.trigger("beforeValidate");
+
+			// for each condition
+			for (condition in conditions){
+
+				val = ((condition === "required") ? that.element : value.toLowerCase());
+				tested = test(condition, val);
+
+				// return false if any test fails,
+				if (!tested) {
+
+					/**
+					* Triggers when an error occurs on the validation process.
+					* @name ch.Validator#error
+					* @event
+					* @public
+					* @example
+					* me.on("error",function(event, condition){
+					*	errorModal.show();
+					* });
+					*/
+					// old callback system
+					that.callbacks('onError', condition);
+					// new callback
+					that.trigger("error", condition);
+
+					that.active = true;
+
+					// stops the proccess
+					//return false;
+					return {
+						"status": false,
+						"condition": condition,
+						"msg": conditions[condition].message
+					}
+				};
+			}
+		}
+
+		// Status OK (with previous error)
+		if (that.active || !that.enabled) {
+			// Public status OK
+			that.active = false;
+		}
+
+		/**
+		* Triggers when the validation process ends.
+		* @name ch.Validator#afterValidate
+		* @event
+		* @public
+		* @example
+		* me.on("afterValidate",function(){
+		*	submitButton.disable();
+		* });
+		*/
+		// old callback system
+		that.callbacks('afterValidate');
+		// new callback
+		that.trigger("afterValidate");
+
+		// It's all good ;)
+		//return true;
+		return {
+			"status": true
+		}
+	}
+
+	/**
+	* Test a condition looking for error.
+	* @private
+	* @name ch.Validator#test
+	* @see ch.Condition
+	*/
+	var test = function(condition, value){
+		
+		if (value === "" && condition !== "required") { return true };
+		
+		var isOk = false,
+			condition = conditions[condition];
+
+		isOk = condition.test(value);
+
+		return isOk;
+		
+	};
+
+/**
+* Protected Members
+*/
+
+	/**
+	* Flag that let you know if there's a validation going on.
+	* @protected
+	* @name ch.Validator#active
+	* @type boolean
+	*/
+	that.active = false;
+
+	/**
+	* Flag that let you know if the all conditions are enabled or not.
+	* @protected
+	* @name ch.Validator#enabled
+	* @type boolean
+	*/
+	that.enabled = true;
+
+/**
+*	Public Members
+*/
+
+	/**
+	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
+	* @public
+	* @name ch.Validator#uid
+	* @type Number
+	*/
+	
+	/**
+	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
+	* @public
+	* @name ch.Validator#type
+	* @type String
+	*/
+	that["public"].type = "validator";
+
+	/**
+	* This public Map saves all the validation configurations from this instance.
+	* @public
+	* @name ch.Validator#conditions
+	* @type object
+	*/
+	that["public"].conditions = conditions;
+
+	/**
+	* Active is a boolean property that let you know if there's a validation going on.
+	* @public
+	* @name ch.Validator#isActive
+	* @function
+	* @returns itself
+	*/
+	that["public"].isActive = function() {
+		return that.active;
+	};
+
+	/**
+	* Let you keep chaining methods.
+	* @public
+	* @name ch.Validator#and
+	* @function
+	* @returns itself
+	*/
+	that["public"].and = function(){
+		return that.$element;
+	};
+
+	/**
+	* Merge its conditions with a new conditions of another instance with the same trigger.
+	* @public
+	* @name ch.Validator#extend
+	* @function
+	* @returns itself
+	*/
+	that["public"].extend = function(input){
+		$.extend(conditions, input);
+
+		return that["public"];
+	};
+
+	/**
+	* Clear all active validations.
+	* @public
+	* @name ch.Validator#clear
+	* @function
+	* @returns itself
+	*/
+	that["public"].clear = function() {
+		that.active = false;
+
+		return that["public"];
+	};
+
+	/**
+	* Runs all configured conditions and returns an object with a status value, condition name and a message.
+	* @public
+	* @function
+	* @name ch.Validator#validate
+	* @returns Status Object
+	*/
+	that["public"].validate = function(value){
+		return validate(value);
+	}
+
+	/**
+	* Turn on Validator engine or an specific condition.
+	* @public
+	* @name ch.Validator#enable
+	* @function
+	* @returns itself
+	*/
+	that["public"].enable = function(condition){
+		if (condition && conditions[condition]){
+			// Enable specific condition
+			conditions[condition].enable();
+		} else {
+			// enable all
+			that.enabled = true;
+			for (condition in conditions){
+				conditions[condition].enable();
+			}
+		}
+		return that["public"];
+	}
+
+	/**
+	* Turn on Validator engine or an specific condition.
+	* @public
+	* @name ch.Validator#disable
+	* @function
+	* @returns itself
+	*/
+	that["public"].disable = function(condition){
+		if (condition && conditions[condition]){
+			// disable specific condition
+			conditions[condition].disable();
+		} else {
+			// disable all
+			that.enabled = false;
+			for (condition in conditions){
+				conditions[condition].disable();
+			}
+		}
+		return that["public"];
+	}
+
+/**
+*	Default event delegation
+*/
+	/**
+	* Triggers when the component is ready to use.
+	* @name ch.Validator#ready
+	* @event
+	* @public
+	* @example
+	* // Following the first example, using 'me' as modal's instance controller:
+	* me.on("ready",function(){
+	*	this.show();
+	* });
+	*/
+	that.trigger("ready");
+
+	return that;
+};
+ch.factory("validator");
 /**
 * Cache control utility.
 * @abstract
@@ -689,6 +2300,909 @@ ch.cache = {
 		ch.cache.map = {};
 	}
 };/**
+* Description
+* @abstract
+* @name Condition
+* @class Condition
+* @standalone
+* @memberOf ch
+* @param {Object} condition Object with configuration properties.
+* @param {String} condition.name
+* @param {Object} [condition.patt]
+* @param {Function} [condition.expr]
+* @param {Function} [condition.func]
+* @param {Number || String} [condition.value]
+* @param {String} condition.message Validation message
+* @returns itself
+* @example
+* // Create a new condition object with patt.
+* var me = ch.condition({
+*     "name": "string",
+*     "patt": /^([a-zA-Z\u00C0-\u00C4\u00C8-\u00CF\u00D2-\u00D6\u00D9-\u00DC\u00E0-\u00E4\u00E8-\u00EF\u00F2-\u00F6\u00E9-\u00FC\u00C7\u00E7\s]*)$/,
+*     "message": "Some message here!"
+* });
+* @example
+* // Create a new condition object with expr.
+* var me = ch.condition({
+*     "name": "maxLength",
+*     "patt": function(a,b) { return a.length <= b },
+*     "message": "Some message here!",
+*     "value": 4
+* });
+* @example
+* // Create a new condition object with func.
+* var me = ch.condition({
+*     "name": "custom",
+*     "patt": function (value) { 
+*         if (value === "ChicoUI") {
+*
+*             // Some code here!
+*
+*             return true;
+*         };
+*
+*         return false;
+*     },
+*     "message": "Your message here!"
+* });
+*/
+
+ch.condition = function(condition) {
+
+/**
+* Reference to a internal component instance, saves all the information and configuration properties.
+* @protected
+* @name ch.Condition#that
+* @type itself
+*/
+	var that = this;
+
+/**
+* Private Members
+*/
+
+	/**
+	* Flag that let you know if the condition is enabled or not.
+	* @private
+	* @name ch.Condition#enabled
+	* @type boolean
+	*/
+	var	enabled = true,
+
+		test = function (value) {
+
+			if (!enabled) {
+				return true;
+			}
+	
+			if (condition.patt){
+				return condition.patt.test(value);
+			}
+	
+			if (condition.expr){
+				return condition.expr(value, condition.value);
+			}
+	
+			if (condition.func){
+				// Call validation function with 'this' as scope.
+				return condition.func.call(that, value);
+			}
+	
+		},
+
+		enable = function() {
+			enabled = true;
+			
+			return condition;
+		},
+	
+		disable = function() {
+			enabled = false;
+			
+			return condition;
+		};
+
+/**
+* Protected Members
+*/
+
+/**
+* Public Members
+*/
+
+	/**
+	* Flag that let you know if the all conditions are enabled or not.
+	* @public
+	* @name ch.Condition#name
+	* @type string
+	*/
+
+	/**
+	* Message defined for this condition
+	* @public
+	* @name ch.Condition#message
+	* @type string
+	*/
+
+	/**
+	* Run configured condition
+	* @public
+	* @name ch.Condition#test
+	* @function
+	* @returns boolean
+	*/
+
+	/**
+	* Turn on condition.
+	* @public
+	* @function
+	* @name ch.Condition#enable
+	* @returns itself
+	*/
+
+	/**
+	* Turn off condition.
+	* @public
+	* @function
+	* @name ch.Condition#disable
+	* @returns itself
+	*/
+
+	condition = $.extend(condition, {
+		test: test,
+		enable: enable,
+		disable: disable
+	});
+
+	return condition;
+
+};
+/**
+* Eraser is an utility to erase component's instances and free unused memory. A Numer will erase only that particular instance, a component's name will erase all components of that type, a "meltdown" will erase all component's instances from any kind.
+* @abstract
+* @name Eraser
+* @class Eraser
+* @memberOf ch
+* @param {string} [data] 
+*/
+	
+ch.eraser = function(data) {
+	
+	if(typeof data == "number"){
+		
+		// By UID
+		for(var x in ch.instances){
+			
+			var component = ch.instances[x];
+			
+			for(var i = 0, j = component.length; i < j; i += 1){
+				if(component[i].uid == data){
+					// TODO: component.delete()
+					delete component[i];
+					component.splice(i, 1);
+					
+					return;
+				};
+			};
+		};
+	
+	} else {
+		
+		// All
+		if(data === "meltdown"){
+			// TODO: component.delete()
+			/*for(var x in ch.instances){
+				var component = ch.instances[x];
+				for(var i = 0, j = component.length; i < j; i += 1){
+					component.delete();
+				};
+			};*/
+			
+			delete ch.instances;
+			ch.instances = {};
+			
+		// By component name	
+		} else {
+			
+			for(var x in ch.instances){
+			
+				if(x == data){
+					
+					var component = ch.instances[x];
+					
+					// TODO: component.delete()
+					/*for(var i = 0; i < component.length; i += 1){
+						component.delete()
+					};*/
+					
+					delete ch.instances[x];
+				};
+			};
+			
+		};
+		
+	};
+	
+};
+
+/**
+* Keyboard event controller utility to know wich keys are begin
+* @abstract
+* @name Keyboard
+* @class Keyboard
+* @memberOF ch
+* @param event
+*/ 
+
+ch.keyboard = function(event) {
+
+	/**
+	* Map with references to key codes.
+	* @private
+	* @name ch.Keyboard#keyCodes
+	* @type object
+	*/ 
+	var keyCodes = {
+		"13": "ENTER",
+		"27": "ESC",
+		"37": "LEFT_ARROW",
+		"38": "UP_ARROW",
+		"39": "RIGHT_ARROW",
+		"40": "DOWN_ARROW"
+	};
+
+	if( !ch.utils.hasOwn(keyCodes, event.keyCode) ) return;
+
+	ch.utils.document.trigger(ch.events.KEY[ keyCodes[event.keyCode] ], event);
+
+};
+/**
+* Manage collections with abstract lists. Create a list of objects, add, get and remove.
+* @abstract
+* @name List
+* @class List
+* @standalone
+* @memberOf ch
+* @param {array} [collection] Constructs a List with an optional initial collection
+*/
+
+ch.list = function( collection ) {
+
+	var that = this;
+
+	/**
+	* @public
+	* @name ch.List#children
+	* @type collection
+	*/
+	var _children = ( collection && ch.utils.isArray( collection ) ) ? collection : [] ;
+
+	/**
+	* Seek members inside the collection by index, query string or object comparison.
+	* @private
+	* @function
+	* @name ch.List#_find
+	* @param {number} [q]
+	* @param {string} [q]
+	* @param {object} [q]
+	* @param {function} [a]
+	* @return object
+	*/
+	var _find = function(q, a) {
+		// null search return the entire collection
+		if ( !q ) {
+			return _children;
+		}
+
+		var c = typeof q;
+		// number? return a specific position
+		if ( c === "number" ) {
+			q--; // _children is a Zero-index based collection
+			return ( a ) ? a.call( that , q ) : _children[q] ;
+		}
+		
+		// string? ok, let's find it
+		var t = size(), _prop, child;
+		if ( c === "string" || c === "object" ) {
+			while ( t-- ) {
+				child = _children[t];
+				// object or string strict equal
+				if ( child === q ) {
+					return ( a ) ? a.call( that , t ) : child ;
+				}
+				// if isn't finded yet
+				// search inside an object for a string
+				for ( _prop in child ) {
+					if ( _prop === q || child[_prop] === q ) {
+						return ( a ) ? a.call( that , t ) : child ;
+					}
+				} // end for
+			} // end while
+		}
+	};
+
+	/**
+	* Adds a new child (or more) to the collection.
+	* @public
+	* @function
+	* @name ch.List#add
+	* @param {string} [child]
+	* @param {object} [child]
+	* @param {array} [child]
+	* @returns number The index of the added child.
+	* @returns collection Returns the entire collecction if the input is an array.
+	*/
+	var add = function( child ) {
+		
+		if ( ch.utils.isArray( child ) ) {
+			var i = 0, t = child.length;
+			for ( i; i < t; i++ ) {
+				_children.push( child[i] );
+			}			
+			return _children;
+		}
+		return _children.push( child );
+	};
+	
+	/**
+	* Removes a child from the collection by index, query string or object comparison.
+	* @public
+	* @function
+	* @name ch.List#rem
+	* @param {number} [q]
+	* @param {string} [q]
+	* @param {object} [q]
+	* @return {object} Returns the removed element
+	*/
+	var rem = function( q ) {
+		// null search return
+		if ( !q ) {
+			return that;
+		}
+		
+		var remove = function( t ) {
+			return _children.splice( t , 1 )[0];
+		}
+
+		return _find( q , remove );
+
+	};
+
+	/**
+	* Get a child from the collection by index, query string or object comparison.
+	* @public
+	* @function
+	* @name ch.List#get
+	* @param {number} [q] Get a child from the collection by index number.
+	* @param {string} [q] Get a child from the collection by a query string.
+	* @param {object} [q] Get a child from the collection by comparing objects.
+	* @return object
+	*/
+	var get = function( q ) {
+
+		return _find( q );
+
+	};
+
+	/**
+	* Get the amount of children from the collection.
+	* @public
+	* @function
+	* @name ch.List#size
+	* @return number
+	*/
+
+	var size = function() {
+		return _children.length;
+	};
+
+	/**
+	* @public
+	*/
+	var that = {
+		children: _children,
+		add: add,
+		rem: rem,
+		get: get,
+		size: size
+	};
+	
+	return that;
+	
+};/**
+* Execute callback when images of a query selection loads
+* @abstract
+* @name onImagesLoads
+* @class onImagesLoads
+* @memberOf ch
+* @param array
+* @returns jQuery
+* @example
+* $("img").onImagesLoads(function () { ... });
+*/
+
+ch.onImagesLoads = function (conf) {
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @private
+	* @name ch.onImagesLoads#that
+	* @type object
+	*/
+	var that = this;
+	conf = ch.clon(conf);
+	that.conf = conf;
+	
+	that.$element
+		// On load event
+		.one("load", function () {
+			setTimeout(function () {
+				if (--that.$element.length <= 0) {
+					that.conf.lambda.call(that.$element, this);
+				}
+			}, 200);
+		})
+		// For each image
+		.each(function () {
+			// Cached images don't fire load sometimes, so we reset src.
+			if (this.complete || this.complete === undefined) {
+				var src = this.src;
+				
+				// Data uri fix bug in web-kit browsers
+				this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+				this.src = src;
+			}
+		});
+	
+	return that;
+};
+
+ch.factory("onImagesLoads");
+/**
+* Pre-load is an utility to preload images on browser's memory. An array of sources will iterate and preload each one, a single source will do the same thing.
+* @abstract
+* @name Preload
+* @class Preload
+* @standalone
+* @memberOf ch
+* @param {array} [arr] Collection of image sources
+* @param {string} [str] A single image source
+* @example
+* ch.preload(["img1.jpg","img2.jpg","img3.png"]);
+* @example
+* ch.preload("logo.jpg");
+*/
+ch.preload = function(arr) {
+
+	if (typeof arr === "string") {
+		arr = (arr.indexOf(",") > 0) ? arr.split(",") : [arr] ;
+	}
+
+	for (var i=0;i<arr.length;i++) {
+
+		var o = document.createElement("object");
+			o.data = arr[i]; // URL
+
+		var h = document.getElementsByTagName("head")[0];
+			h.appendChild(o);
+			h.removeChild(o); 
+	}
+};/**
+* Viewport is a reference to position and size of the visible area of browser.
+* @abstract
+* @name Viewport
+* @class Viewport
+* @standalone
+* @memberOf ch
+*/
+ch.viewport = {
+
+	/**
+	* Width of the visible area.
+	* @public
+	* @name ch.Viewport#width
+	* @type Number
+	*/
+	"width": ch.utils.window.width(),
+
+	/**
+	* Height of the visible area.
+	* @public
+	* @name ch.Viewport#height
+	* @type Number
+	*/
+	"height": ch.utils.window.height(),
+
+	/**
+	* Left offset of the visible area.
+	* @public
+	* @name ch.Viewport#left
+	* @type Number
+	*/
+	"left": ch.utils.window.scrollLeft(),
+
+	/**
+	* Top offset of the visible area.
+	* @public
+	* @name ch.Viewport#top
+	* @type Number
+	*/
+	"top": ch.utils.window.scrollTop(),
+
+	/**
+	* Right offset of the visible area.
+	* @public
+	* @name ch.Viewport#right
+	* @type Number
+	*/
+	"right": ch.utils.window.scrollLeft() + ch.utils.window.width(),
+
+	/**
+	* Bottom offset of the visible area.
+	* @public
+	* @name ch.Viewport#bottom
+	* @type Number
+	*/
+	"bottom": ch.utils.window.scrollTop() + ch.utils.window.height(),
+
+	/**
+	* Element representing the visible area.
+	* @public
+	* @name ch.Viewport#element
+	* @type Object
+	*/
+	"element": ch.utils.window,
+
+	/**
+	* Updates width and height of the visible area and updates ch.viewport.width and ch.viewport.height
+	* @public
+	* @function
+	* @name ch.Viewport#getSize
+	* @returns Object
+	*/
+	"getSize": function () {
+
+		return {
+			"width": this.width = ch.utils.window.width(),
+			"height": this.height = ch.utils.window.height()
+		};
+
+	},
+
+	/**
+	* Updates left, top, right and bottom coordinates of the visible area, relative to the window.
+	* @public
+	* @function
+	* @name ch.Viewport#getPosition
+	* @returns Object
+	*/
+	"getPosition": function () {
+
+		var size = this.getSize();
+
+		return {
+			"left": 0,
+			"top": 0,
+			"right": size.width,
+			"bottom": size.height,
+			// Size is for use as context on Positioner
+			// (see getCoordinates method on Positioner)
+			"width": size.width,
+			"height": size.height
+		};
+		
+	},
+	
+	/**
+	* Updates left, top, right and bottom coordinates of the visible area, relative to the document.
+	* @public
+	* @function
+	* @name ch.Viewport#getOffset
+	* @returns Object
+	*/
+	"getOffset": function () {
+
+		var position = this.getPosition(),
+			scrollLeft = ch.utils.window.scrollLeft(),
+			scrollTop = ch.utils.window.scrollTop();
+
+		return {
+			"left": this.left = scrollLeft,
+			"top": this.top = scrollTop,
+			"right": this.right = scrollLeft + position.right,
+			"bottom": this.bottom = scrollTop + position.bottom
+		};
+		
+	}
+};
+/**
+* AutoComplete is a UI-Component.
+* @name AutoComplete
+* @class AutoComplete
+* @augments ch.Navs
+* @standalone
+* @memberOf ch
+* @param {Object} [conf] Object with configuration properties.
+* @param {Boolean} [conf.open] Shows the autoComplete open when component was loaded. By default, the value is false.
+* @param {Boolean} [conf.fx] Enable or disable UI effects. By default, the effects are disable.
+* @returns itself
+* @example
+* // Create a new autoComplete with configuration.
+* var me = $(".example").autoComplete({
+*     "open": true,
+*     "fx": true
+* });
+* @example
+* // Create a new autoComplete without configuration.
+* var me = $(".example").autoComplete();
+*/
+ 
+ch.autoComplete = function(conf){
+
+	/**
+	* Reference to a internal component instance, saves all the information and configuration properties.
+	* @private
+	* @name ch.AutoComplete#that
+	* @type object
+	*/
+	var that = this;
+		
+	conf = ch.clon(conf);
+	
+	that.conf = conf;
+	that.conf.icon = false;
+	that.conf.type = "autoComplete";
+	
+/**
+*	Inheritance
+*/
+
+	that = ch.navs.call(that);
+	that.parent = ch.clon(that);
+	
+	that.$element.parent("form").bind("submit",function(e){e.preventDefault()});
+	
+/**
+*  Private Members
+*/
+
+	that.selected = -1;
+
+	/**
+	* Adds keyboard events.
+	* @private
+	* @function
+	* @name ch.AutoComplete#shortcuts
+	*/
+	
+	var shortcuts = function (items) {
+		$.each(items, function (i, e) {
+			$(e).bind("mouseenter", function () {
+				items.eq(that.selected).removeClass("ch-autoComplete-selected");
+				that.selected = i;
+				items.eq(that.selected).addClass("ch-autoComplete-selected");
+				
+				
+			}).bind("mouseleave",function () {
+				
+			}).bind("mousedown",function () {
+				that.$trigger.val(items.eq(that.selected).text());
+				that.$trigger.blur();
+			});
+		});
+	};
+	
+	// move out of shortcuts
+	var selectItem = function (arrow, event) {
+		that.prevent(event);
+		if (that.selected === (arrow === "bottom" ? that.items.length - 1 : 0)) { return; }
+		that.items.eq(that.selected).removeClass("ch-autoComplete-selected");
+		
+		if (arrow === "bottom") { that.selected += 1; } else { that.selected -= 1; }
+		that.items.eq(that.selected).addClass("ch-autoComplete-selected");
+		
+		
+	};
+	
+
+/**
+*  Protected Members
+*/ 
+	
+	var $nav = that.$element.children();
+		that.$trigger = $nav.eq(0).attr("autocomplete","off");
+		that.$content = $nav.eq(1);
+
+	that.populateContent = function(result){
+		that.$content.html("");
+		var content = "<li>"+result.join("</li><li>")+"</li>";
+		that.$content = $nav.eq(1).append(content);
+		that.items = that.$content.find("li");
+		that.selected = -1;
+		shortcuts(that.items);
+	}
+	
+	that.doQuery = function(event){
+		if(event.keyCode!==38 && event.keyCode!==40  && event.keyCode!==13  && event.keyCode!==27){
+			var q = that.$trigger.val(); 
+			var result = $.ajax({
+				url: that.conf.url + q,
+				dataType:"jsonp",
+				jsonp:conf.doQuery,
+				crossDomain:true,
+				success: function(data){}
+			});
+		}
+	}
+	
+	that.configBehavior = function () {
+		that.$trigger
+			.addClass("ch-" + that.type + "-trigger")
+			.bind("focus", function (event) { 
+				  that.show(event);
+			})
+			.bind("blur", function (event) { 
+				 that.hide(event);
+			});
+		that.$content.addClass("ch-" + that.type + "-content ch-hide");
+		that.position = ch.positioner({element:that.$content,context:that.$trigger,points:"lt lb"});
+	};
+	
+	that.show = function(event){
+		that.parent.show();
+		ch.utils.document.bind(ch.events.KEY.UP_ARROW, function (x, event) { selectItem("up", event); });
+		ch.utils.document.bind(ch.events.KEY.DOWN_ARROW, function (x, event) { selectItem("bottom", event); });
+		ch.utils.document.bind(ch.events.KEY.ESC, function (x, event) { that.$trigger.trigger("blur"); });
+		ch.utils.document.bind(ch.events.KEY.ENTER, function (x, event) {  that.$trigger.val(that.items.eq(that.selected).text()); that.$trigger.trigger("blur"); });
+		if(that.conf.url){
+			ch.utils.document.bind("keyup", function (event) { that.doQuery(event); });
+		}
+		return that;
+	}
+	
+	that.hide = function(event){
+		that.doQuery(event);
+		
+		that.parent.hide(event);
+		ch.utils.document.unbind("keyup " + ch.events.KEY.ENTER + " " + ch.events.KEY.ESC + " " + ch.events.KEY.UP_ARROW + " " + ch.events.KEY.DOWN_ARROW);
+		return that;
+	}
+	
+	that.populateContent(["Please write to be suggested"]);
+/**
+*  Public Members
+*/
+ 
+	/**
+	* The component's instance unique identifier.
+	* @public
+	* @name ch.AutoComplete#uid
+	* @type number
+	*/
+	
+	/**
+	* The element reference.
+	* @public
+	* @name ch.AutoComplete#element
+	* @type HTMLElement
+	*/
+	
+	/**
+	* The component's type.
+	* @public
+	* @name ch.AutoComplete#type
+	* @type string
+	*/
+	
+	/**
+	* Shows component's content.
+	* @public
+	* @function
+	* @name ch.AutoComplete#show
+	* @returns itself
+	*/
+	that["public"].show = function(){
+		that.show();
+		return that["public"];
+	};
+
+	/**
+	* Hides component's content.
+	* @public
+	* @function
+	* @name ch.AutoComplete#hide
+	* @returns itself
+	*/	
+	that["public"].hide = function(){
+		that.hide(ch.events.KEY.ESC);
+		return that["public"];
+	};
+	
+	
+	/**
+	* Hides component's content.
+	* @public
+	* @function
+	* @name ch.AutoComplete#hide
+	* @returns itself
+	*/	
+	that["public"].suggest = function(data){
+		that.populateContent(data);
+		return that["public"];
+	};
+
+/**
+*  Default event delegation
+*/	
+	
+	that.configBehavior();
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.AutoComplete#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as autoComplete's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
+
+	return that;
+};
+
+ch.factory("autoComplete");/** 
+* Blink is a UI feedback utility. It creates a visual highlight changing background color from yellow to white.
+* @function
+* @name Blink
+* @class Blink
+* @memberOf ch
+* @param {Object} conf Configuration object
+* @param {number} [conf.time] Amount of time to blink in milliseconds
+* @returns jQuery
+*/
+ch.blink = function (conf) {
+
+	var that = this,
+		// Hex start level toString(16).
+		level = 1, 
+		// Time, 200 miliseconds by default.
+		t = conf.time || 200,
+		// Inner highlighter.
+		highlight = function (e) {
+			// Let know everyone we are active.
+			that.$element.addClass("ch-active").attr("role","alert").attr("aria-live","polite");
+			// Color iteration.
+			function step () {
+				// New hex level.
+				var h = level.toString(16);
+				// Change background-color, redraw().
+				e.style.backgroundColor = '#FFFF' + h + h;
+				// Itearate for all hex levels.
+				if (level < 15) {
+					// Increment hex level.
+					level += 1;
+					// Inner recursion.
+					setTimeout(step, t);
+				} else {
+					// Stop right there...
+					that.$element.removeClass("ch-active").attr("aria-live","off").removeAttr("role");
+				}
+			};
+		// Begin steps.
+		setTimeout(step, t);
+	}
+	// Start a blink if the element isn't active.
+	if (!that.$element.hasClass("ch-active")) {
+		highlight(that.element);
+	}
+	// Return the element so keep chaining things.
+	return that.$element;
+}
+ch.factory("blink");/**
 * Is a simple UI-Component for picking dates.
 * @name Calendar
 * @class Calendar
@@ -698,6 +3212,8 @@ ch.cache = {
 * @param {Object} [conf] Object with configuration properties.
 * @param {String} [conf.format] Sets the date format. By default is "DD/MM/YYYY".
 * @param {String} [conf.selected] Sets a date that should be selected by default. By default is the date of today.
+* @param {String} [conf.from] Set a maximum selectable date.
+* @param {String} [conf.to] Set a minimum selectable date.
 * @param {Array} [conf.monthsNames] By default is ["Enero", ... , "Diciembre"].
 * @param {Array} [conf.weekdays] By default is ["Dom", ... , "Sab"].
 * @returns itself
@@ -706,7 +3222,9 @@ ch.cache = {
 * // Create a new calendar with configuration.
 * var me = $(".example").calendar({
 *     "format": "YYYY/MM/DD",
-*     "selected": "2012/12/25",
+*     "selected": "2011/12/25",
+*     "from": "2010/12/25",
+*     "to": "2012/12/25",
 *     "monthsNames": ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
 *     "weekdays": ["Su", "Mo", "Tu", "We", "Thu", "Fr", "Sa"]
 * });
@@ -778,12 +3296,59 @@ ch.calendar = function (conf) {
 	var today = new Date();
 
 	/**
+	* Minimum selectable date
+	* @private
+	* @since 0.9
+	* @function
+	* @name ch.Calendar#from
+	*/
+	var from = (function () {
+		if (ch.utils.hasOwn(conf, "from")) {
+			return (conf.from === "today") ? new Date() : new Date(conf.from);
+		}
+	}());
+
+	/**
+	* Maximum selectable date
+	* @private
+	* @since 0.9
+	* @function
+	* @name ch.Calendar#to
+	*/
+	var to = (function () {
+		if (ch.utils.hasOwn(conf, "to")) {
+			return (conf.to === "today") ? new Date() : new Date(conf.to);
+		}
+	}());
+
+
+	/**
+	* Parse string to YY/MM/DD format date
+	* @private
+	* @function
+	* @name ch.Calendar#parseDate 	
+	*/
+	var parseDate = function (value) {
+		var date = value.split("/");
+		
+		switch (conf.format) {
+			case "DD/MM/YYYY":
+				return date[2] + "/" + date[1] + "/" + date[0];
+			break;
+			
+			case "MM/DD/YYYY":
+				return date[2] + "/" + date[0] + "/" + date[1];
+			break;
+		};
+	};
+
+	/**
 	* Date of selected day
 	* @private
 	* @name ch.Calendar#selected
 	* @type date
 	*/
-	var selected = conf.selected || conf.msg;
+	var selected = conf.selected || conf.msg || ((that.element.value != "") ? new Date(parseDate(that.element.value)) : "");
 
 	/**
 	* Creates tag thead with short name of week days
@@ -795,17 +3360,17 @@ ch.calendar = function (conf) {
 	//TODO: change to constant syntax
 	//TODO: subfijo de render y cambiar el nombre para que sea mas especifico, thead
 	var weekdays = (function () {
-		
+
 		var thead = ["<thead>"];
-		
+
 		thead.push("<tr role=\"row\">");
-		
+
 		for (var i = 0; i < 7; i += 1) {
 			thead.push("<th role=\"columnheader\">" + SHORT_WEEK_NAMES[i] + "</th>");
 		};
 		thead.push("</tr>");
 		thead.push("</thead>")
-		
+
 		return thead.join("");
 
 	}());
@@ -820,15 +3385,17 @@ ch.calendar = function (conf) {
 		.bind("click", function (event) {
 
 			event = event || window.event;
-			
+
 			var src = event.target || event.srcElement;
 
-			if (src.nodeName !== "TD" || src.className.indexOf("day")) {
+			if (src.nodeName !== "TD" || src.className.indexOf("day") === -1 || src.className.indexOf("disabled") !== -1) {
 				that.prevent(event);
 				return;
 			}
 
 			select(that.currentDate.getFullYear() + "/" + (that.currentDate.getMonth() + 1) + "/" + src.innerHTML);
+
+			that["public"].hide();
 		});
 
 	/**
@@ -851,17 +3418,25 @@ ch.calendar = function (conf) {
 			currentMonth.month = currentMonth.fullDate.getMonth();
 			currentMonth.year = currentMonth.fullDate.getFullYear();
 
-		var currentDate = {};
-			currentDate.fullDate = new Date(date.getFullYear(), date.getMonth(), 1);
-			currentDate.date = currentDate.fullDate.getDate();
-			currentDate.day = currentDate.fullDate.getDay();
-			currentDate.month = currentDate.fullDate.getMonth();
-			currentDate.year = currentDate.fullDate.getFullYear();
+		// Get previous month
+		/*
+		var prevMonth = {};
+			prevMonth.fullDate = new Date(currentMonth.fullDate.getFullYear(), currentMonth.fullDate.getMonth() - 1, 1);
+
+			// Get the last day of the previous month
+			prevMonth.fullDate.setTime(prevMonth.fullDate.getTime() + ((32 - prevMonth.fullDate.getDate()) * 86400000) );
+			prevMonth.fullDate.setTime(prevMonth.fullDate.getTime() - (prevMonth.fullDate.getDate() * 86400000) );
+			prevMonth.date = prevMonth.fullDate.getDate();
+		*/
+
+		var currentDate = ch.clon(currentMonth);
 
 		var firstWeekday = currentMonth.day;
 
 		var classToday,
 			classSelected,
+			classDisabled,
+			waiSelected,
 			weeks = ["<tbody>"];
 
 		do {
@@ -871,24 +3446,39 @@ ch.calendar = function (conf) {
 			for (var i = 0; i < 7; i += 1) {
 
 				if (currentDate.date === 1) {
+					/*var last = (prevMonth.date - (firstWeekday - 1));
 					for (var i = 0; i < firstWeekday; i += 1) {
-						weeks.push("<td class=\"disable\"></td>");
+						weeks.push("<td class=\"otherMonth\" role=\"gridcell\">" + (last + i) + "</td>");
+					};*/
+					
+					for (i; i < firstWeekday; i += 1) {
+						weeks.push("<td class=\"otherMonth\" role=\"gridcell\"></td>");
 					};
 				}
 				
 				classToday = (currentDate.date === today.getDate() && currentDate.month === today.getMonth() && currentDate.year === today.getFullYear()) ? " today" : "";
 
-				classSelected = (selected && currentDate.date === selected.getDate() && currentDate.month === selected.getMonth() && currentDate.year === selected.getFullYear()) ? " selected\" aria-selected=\"true\"" : "";
+				classSelected = (selected && currentDate.date === selected.getDate() && currentDate.month === selected.getMonth() && currentDate.year === selected.getFullYear()) ? " selected" : "";
 				
-				weeks.push("<td class=\"day" + classToday + classSelected + "\"  role=\"gridcell\">" + currentDate.date + "</td>");
+				classDisabled = ((from && from.getDate() > currentDate.date && from.getMonth() === currentDate.month && from.getFullYear() === currentDate.year) || (to && to.getDate() < currentDate.date && to.getMonth() === currentDate.month && to.getFullYear() === currentDate.year)) ? " disabled" : "";
+
+				waiSelected = (classSelected !== "") ? "aria-selected=\"true\"" : "";
 				
+				weeks.push("<td class=\"day" + classToday + classSelected + classDisabled +"\" " + waiSelected + "  role=\"gridcell\">" + currentDate.date + "</td>");
+				
+
 				currentDate.fullDate.setDate(currentDate.date+1);
 				currentDate.date = currentDate.fullDate.getDate();
 				currentDate.day = currentDate.fullDate.getDay();
 				currentDate.month = currentDate.fullDate.getMonth();
 				currentDate.year = currentDate.fullDate.getFullYear();
 
-				if (currentDate.month != currentMonth.month) { break; }
+				if (currentDate.month != currentMonth.month) {
+					for (var j = 1; j < (7-i); j += 1) {
+						weeks.push("<td class=\"otherMonth\" role=\"gridcell\"></td>");//" + j + "
+					};
+					break;
+				}
 
 			};
 
@@ -902,6 +3492,8 @@ ch.calendar = function (conf) {
 			.prepend("<caption>" + MONTHS_NAMES[currentMonth.month] + " - " + currentMonth.year + "</caption>")
 			.append(weeks.join(""));
 
+		ch.utils.avoidTextSelection(tableMonth.children("caption"));
+
 		return tableMonth;
 	};
 
@@ -914,9 +3506,9 @@ ch.calendar = function (conf) {
 	*/
 	var arrows = {
 	
-		$prev: $("<p class=\"ch-calendar-prev\" aria-controls=\"ch-calendar-grid-"+that.uid+"\">prev</p>").bind("click", function (event) { that.prevent(event); prevMonth(); }),
+		$prev: $("<p class=\"ch-calendar-prev\" aria-controls=\"ch-calendar-grid-" + that.uid + "\"><span>Previous</span></p>").bind("click", function (event) { that.prevent(event); prevMonth(); }),
 	
-		$next: $("<p class=\"ch-calendar-next\" aria-controls=\"ch-calendar-grid-"+that.uid+"\">next</p>").bind("click", function (event) { that.prevent(event); nextMonth(); })
+		$next: $("<p class=\"ch-calendar-next\" aria-controls=\"ch-calendar-grid-" + that.uid + "\"><span>Next</span></p>").bind("click", function (event) { that.prevent(event); nextMonth(); })
 	};
 
 	/**
@@ -948,7 +3540,8 @@ ch.calendar = function (conf) {
 
 		that.children[0].position({
 			context: that.$element,
-			points: "lt lb"
+			points: "lt lb",
+			offset: "0 5"
 		});
 
 	};
@@ -971,26 +3564,6 @@ ch.calendar = function (conf) {
 
 		createDropdown();
 
-	};
-
-	/**
-	* Parse string to YY/MM/DD format date
-	* @private
-	* @function
-	* @name ch.Calendar#parseDate 	
-	*/
-	var parseDate = function (value) {
-		var date = value.split("/");
-		
-		switch (conf.format) {
-			case "DD/MM/YYYY":
-				return date[2] + "/" + date[1] + "/" + date[0];
-			break;
-			
-			case "MM/DD/YYYY":
-				return date[2] + "/" + date[0] + "/" + date[1];
-			break;
-		};
 	};
 
 
@@ -1029,9 +3602,9 @@ ch.calendar = function (conf) {
 
 		that.currentDate = selected;
 		
-		that.$content.html(createMonth(selected));
-		
 		that.element.value = FORMAT_DATE[conf.format](selected);
+		
+		that.$content.html(createMonth(selected));
 
 		/**
 		* Callback function
@@ -1061,6 +3634,11 @@ ch.calendar = function (conf) {
 
 		//Refresh position
 		that.children[0].position("refresh");
+		that.$container.prepend(arrows.$prev);
+
+		if (to && to.getMonth() <= that.currentDate.getMonth() && to.getFullYear() === that.currentDate.getFullYear()) {
+			arrows.$next.detach();
+		}
 
 		// Callback
 		that.callbacks("onNextMonth");
@@ -1078,12 +3656,20 @@ ch.calendar = function (conf) {
 	* @return itself
 	*/
 	var prevMonth = function () {
+
 		that.currentDate = new Date(that.currentDate.getFullYear(), that.currentDate.getMonth() - 1, 1);
-		
+
 		that.$content.html(createMonth(that.currentDate));
-		
+
 		// Refresh position
 		that.children[0].position("refresh");
+		that.$container.prepend(arrows.$next);
+
+		if (from && from.getMonth() >= that.currentDate.getMonth() && from.getFullYear() === that.currentDate.getFullYear()) {
+			arrows.$prev.detach();
+
+			return that;
+		}
 
 		// Callback
 		that.callbacks("onPrevMonth");
@@ -1235,27 +3821,35 @@ ch.calendar = function (conf) {
 	};
 
 	/**
-	* Returns the selected date
+	* Select a specific date or returns the selected date.
 	* @public
+	* @since 0.9
 	* @function
-	* @name ch.Calendar#getSelected
+	* @name ch.Calendar#select
+	* @param {string} "YYYY/MM/DD".
 	* @return itself
-	* @TODO: Unifiy with select() method.
 	*/
-	that["public"].getSelected = function () {
-		return FORMAT_DATE[conf.format](selected);
+	that["public"].select = function (date) {
+		if (typeof date === "undefined") {
+			return FORMAT_DATE[conf.format](selected);
+		}
+
+		select((date === "today") ? today : parseDate(date));	
+		return that["public"];
+
 	};
 
 	/**
 	* Returns date of today
 	* @public
+	* @since 0.9
 	* @function
-	* @name ch.Calendar#getToday
+	* @name ch.Calendar#today
 	* @return date
 	*/
-	that["public"].getToday = function () {
+	that["public"].today = function () {
 		return FORMAT_DATE[conf.format](today);
-	};	
+	};
 
 	/**
 	* Move to the next month or year. If it isn't specified, it will be moved to next month.
@@ -1317,19 +3911,69 @@ ch.calendar = function (conf) {
 		return that["public"];
 	};
 
+	/**
+	* Set a minimum selectable date.
+	* @public
+	* @since 0.9
+	* @function
+	* @name ch.Calendar#from
+	* @param {string} "YYYY/MM/DD".
+	* @return itself
+	*/
+	that["public"].from = function (date) {
+		from = new Date(date);
+		return that["public"];
+	};
+
+	/**
+	* Set a maximum selectable date.
+	* @public
+	* @since 0.9
+	* @function
+	* @name ch.Calendar#to
+	* @param {string} "YYYY/MM/DD".
+	* @return itself
+	*/
+	that["public"].to = function (date) {
+		to = new Date(date);
+		return that["public"];
+	};
+
 /**
 *	Default event delegation
 */
 
 	that.element.type = "text";
 
-	that.element.value = ((selected) ? FORMAT_DATE[conf.format](selected) : "");
+	that.element.value = ((selected !== "") ? FORMAT_DATE[conf.format](selected) : "");
 
 	createLayout();
 
 	that.$content.html(createMonth(that.currentDate)).appendTo(that.$container);
 
-	that.$container.prepend(arrows.$prev).prepend(arrows.$next);
+	ch.utils.avoidTextSelection(that.$container);
+	
+	if (!from || (from.getMonth() <= that.currentDate.getMonth())) {
+		that.$container.prepend(arrows.$prev);
+	}
+
+	if (!to || (to.getMonth() >= that.currentDate.getMonth())) {
+		that.$container.prepend(arrows.$next);
+	}
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Calendar#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as calendar's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
@@ -1692,7 +4336,7 @@ ch.carousel = function (conf) {
 	* @name ch.Carousel#$collection
 	* @type jQuery Object
 	*/
-	that.$collection = that.$element.children("ul").addClass("ch-carousel-list").attr("role", "list").appendTo(that.$content);
+	that.$collection = that.$element.children().addClass("ch-carousel-list").attr("role", "list").appendTo(that.$content);
 	
 	/**
 	* Each item into collection.
@@ -2052,7 +4696,7 @@ ch.carousel = function (conf) {
 	*/
 	that["public"].select = function (data) {
 		// TODO: Add support to goTo function on asynchronous item load.
-		if (ch.utils.hasOwn(conf, "asyncData")) { return that["public"]; }
+		if (ch.utils.hasOwn(conf, "asyncData")) { return that["public"]; }
 		
 		that.goTo(data);
 
@@ -2170,211 +4814,25 @@ ch.carousel = function (conf) {
 		draw();
 		
 	}, 350);
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Carousel#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as carousel's instance controller:
+	* me.on("ready",function () {
+	*	this.itemsPerPage();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
 
 ch.factory("carousel");
-/**
-* Description
-* @abstract
-* @name Condition
-* @class Condition
-* @standalone
-* @memberOf ch
-* @param {Object} condition Object with configuration properties.
-* @param {String} condition.name
-* @param {Object} [condition.patt]
-* @param {Function} [condition.expr]
-* @param {Function} [condition.func]
-* @param {Number || String} [condition.value]
-* @param {String} condition.message Validation message
-* @returns itself
-* @example
-* // Create a new condition object with patt.
-* var me = ch.condition({
-*     "name": "string",
-*     "patt": /^([a-zA-Z\u00C0-\u00C4\u00C8-\u00CF\u00D2-\u00D6\u00D9-\u00DC\u00E0-\u00E4\u00E8-\u00EF\u00F2-\u00F6\u00E9-\u00FC\u00C7\u00E7\s]*)$/,
-*     "message": "Some message here!"
-* });
-* @example
-* // Create a new condition object with expr.
-* var me = ch.condition({
-*     "name": "maxLength",
-*     "patt": function(a,b) { return a.length <= b },
-*     "message": "Some message here!",
-*     "value": 4
-* });
-* @example
-* // Create a new condition object with func.
-* var me = ch.condition({
-*     "name": "custom",
-*     "patt": function (value) { 
-*         if (value === "ChicoUI") {
-*
-*             // Some code here!
-*
-*             return true;
-*         };
-*
-*         return false;
-*     },
-*     "message": "Your message here!"
-* });
-*/
-
-ch.condition = function(condition) {
-
-/**
-* Reference to a internal component instance, saves all the information and configuration properties.
-* @protected
-* @name ch.Condition#that
-* @type itself
-*/
-	var that = this;
-
-/**
-* Private Members
-*/
-
-	/**
-	* Flag that let you know if the condition is enabled or not.
-	* @private
-	* @name ch.Condition#enabled
-	* @type boolean
-	*/
-	var	enabled = true,
-
-		test = function (value) {
-
-			if (!enabled) {
-				return true;
-			}
-	
-			if (condition.patt){
-				return condition.patt.test(value);
-			}
-	
-			if (condition.expr){
-				return condition.expr(value, condition.value);
-			}
-	
-			if (condition.func){
-				// Call validation function with 'this' as scope.
-				return condition.func.call(that, value);
-			}
-	
-		},
-
-		enable = function() {
-			enabled = true;
-			
-			return condition;
-		},
-	
-		disable = function() {
-			enabled = false;
-			
-			return condition;
-		};
-
-/**
-* Protected Members
-*/
-
-/**
-* Public Members
-*/
-
-	/**
-	* Flag that let you know if the all conditions are enabled or not.
-	* @public
-	* @name ch.Condition#name
-	* @type string
-	*/
-
-	/**
-	* Message defined for this condition
-	* @public
-	* @name ch.Condition#message
-	* @type string
-	*/
-
-	/**
-	* Run configured condition
-	* @public
-	* @name ch.Condition#test
-	* @function
-	* @returns boolean
-	*/
-
-	/**
-	* Turn on condition.
-	* @public
-	* @function
-	* @name ch.Condition#enable
-	* @returns itself
-	*/
-
-	/**
-	* Turn off condition.
-	* @public
-	* @function
-	* @name ch.Condition#disable
-	* @returns itself
-	*/
-
-	condition = $.extend(condition, {
-		test: test,
-		enable: enable,
-		disable: disable
-	});
-
-	return condition;
-
-};
-/**
-* Abstract class
-* @abstract
-* @name Controllers
-* @class Controllers 
-* @augments ch.Uiobject
-* @memberOf ch
-* @returns itself
-* @see ch.Accordion
-* @see ch.Carousel
-* @see ch.Form
-*/
-
-ch.controllers = function(){
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @name ch.Controllers#that
-	* @type object
-	*/ 
-	var that = this;
-		
-	/**
-	*  Inheritance
-	*/
-	that = ch.uiobject.call(that);
-	that.parent = ch.clon(that);
-	
- 
-	/**
-	* Collection of children elements.
-	* @name ch.Controllers#children
-	* @type collection
-	*/ 
-	that.children = [];
-			
-	/**
-	*  Public Members
-	*/	
-		
-	return that;
-};
 
 /**
 * Create custom validation interfaces for Validator validation engine.
@@ -2514,7 +4972,15 @@ ch.dropdown = function (conf) {
 	* @name ch.Dropdown#$trigger
 	* @type jQuery
 	*/
-	that.$trigger = that.$element.children().eq(0);
+	that.$trigger = (function () {
+		
+		var $el = that.$element.children().eq(0);
+		
+		if (!that.$element.hasClass("secondary")) { $el.addClass("btn skin"); }
+		
+		return $el;
+		
+	}());
 
 	/**
 	* The component's content.
@@ -2533,7 +4999,6 @@ ch.dropdown = function (conf) {
 				if ((event.target || event.srcElement).tagName === "A") {
 					that.hide();
 				}
-
 				event.stopPropagation();
 			})
 		// WAI-ARIA properties
@@ -2578,7 +5043,7 @@ ch.dropdown = function (conf) {
 		});
 
 		// Close events
-		ch.utils.document.one("click " + ch.events.KEY.ESC, function (event) { that.hide(event); });
+		ch.utils.document.one("click " + ch.events.KEY.ESC, function () { that.hide(); });
 
 		// Keyboard support
 		var items = that.$content.find("a");
@@ -2591,7 +5056,6 @@ ch.dropdown = function (conf) {
 	};
 
 	that.hide = function (event) {
-		that.prevent(event);
 
 		that.parent.hide(event);
 		
@@ -2662,86 +5126,32 @@ ch.dropdown = function (conf) {
 	*/
 	that["public"].position = that.position;
 
-/**
+/** 
 *  Default event delegation
 */			
 
 	that.configBehavior();
 
 	ch.utils.avoidTextSelection(that.$trigger);
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Dropdown#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as dropdown's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
 
 ch.factory("dropdown");
-/**
-* Eraser is an utility to erase component's instances and free unused memory. A Numer will erase only that particular instance, a component's name will erase all components of that type, a "meltdown" will erase all component's instances from any kind.
-* @abstract
-* @name Eraser
-* @class Eraser
-* @memberOf ch
-* @param {string} [data] 
-*/
-	
-ch.eraser = function(data) {
-	
-	if(typeof data == "number"){
-		
-		// By UID
-		for(var x in ch.instances){
-			
-			var component = ch.instances[x];
-			
-			for(var i = 0, j = component.length; i < j; i += 1){
-				if(component[i].uid == data){
-					// TODO: component.delete()
-					delete component[i];
-					component.splice(i, 1);
-					
-					return;
-				};
-			};
-		};
-	
-	} else {
-		
-		// All
-		if(data === "meltdown"){
-			// TODO: component.delete()
-			/*for(var x in ch.instances){
-				var component = ch.instances[x];
-				for(var i = 0, j = component.length; i < j; i += 1){
-					component.delete();
-				};
-			};*/
-			
-			delete ch.instances;
-			ch.instances = {};
-			
-		// By component name	
-		} else {
-			
-			for(var x in ch.instances){
-			
-				if(x == data){
-					
-					var component = ch.instances[x];
-					
-					// TODO: component.delete()
-					/*for(var i = 0; i < component.length; i += 1){
-						component.delete()
-					};*/
-					
-					delete ch.instances[x];
-				};
-			};
-			
-		};
-		
-	};
-	
-};
-
 /**
 * Expando is a UI-Component.
 * @name Expando
@@ -2873,418 +5283,25 @@ ch.expando = function(conf){
 	that.configBehavior();
 	that.$trigger.children().attr("role","presentation");
 	ch.utils.avoidTextSelection(that.$trigger);
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Expando#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as expando's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
-
 };
 
-ch.factory("expando");/**
-* Abstract class of all floats UI-Objects.
-* @abstract
-* @name ch.Floats
-* @class Floats
-* @augments ch.Uiobject
-* @requires ch.Positioner
-* @returns itself
-* @see ch.Tooltip
-* @see ch.Layer
-* @see ch.Modal
-*/
-
-ch.floats = function () {
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @protected
-	* @name ch.Floats#that
-	* @type object
-	*/
-	var that = this,
-		conf = that.conf;
-
-/**
-* Inheritance
-*/
-
-	that = ch.uiobject.call(that);
-	that.parent = ch.clon(that);
-
-/**
-* Private Members
-*/
-
-	/**
-	* Creates a 'cone', is a visual asset for floats.
-	* @private
-	* @function
-	* @deprecated
-	* @name ch.Floats#createCone
-	*/
-
-	/**
-	* Creates close button.
-	* @private
-	* @function
-	* @deprecated
-	* @name ch.Floats#createClose
-	*/
-
-/**
-* Protected Members
-*/
-	/**
-	* Flag that indicates if the float is active and rendered on the DOM tree.
-	* @protected
-	* @name ch.Floats#active
-	* @type boolean
-	*/
-	that.active = false;
-
-	/**
-	* Content configuration property.
-	* @protected
-	* @name ch.Floats#source
-	* @type string
-	*/
-	that.source = conf.content || conf.msg || conf.ajax || that.element.href || that.$element.parents("form").attr("action");
-
-	/**
-	* Inner function that resolves the component's layout and returns a static reference.
-	* @protected
-	* @name ch.Floats#$container
-	* @type jQuery
-	*/
-	that.$container = (function () { // Create Layout
-		
-		// Final jQuery Object
-		var $container,
-		
-		// Component with close button and keyboard binding for close
-			closable = ch.utils.hasOwn(conf, "closeButton") && conf.closeButton,
-		
-		// HTML Div Element with role for WAI-ARIA
-			container = ["<div role=\"" + conf.aria.role + "\""];
-			
-		// ID for WAI-ARIA
-		if (ch.utils.hasOwn(conf.aria, "identifier")) {
-			
-			// Generated ID using component name and its instance order
-			var id = "ch-" + that.type + "-" + (ch.utils.hasOwn(ch.instances, that.type) ? ch.instances[that.type].length + 1 : "1");
-			
-			// Add ID to container element
-			container.push(" id=\"" + id + "\"");
-			
-			// Add aria attribute to trigger element
-			that.$element.attr(conf.aria.identifier, id);
-		}
-		
-		// Classname with component type and extra classes from conf.classes
-		container.push(" class=\"ch-" + that.type + (ch.utils.hasOwn(conf, "classes") ? " " + conf.classes : "") + "\"");
-		
-		// Z-index, defined width and height, tag close
-		container.push(" style=\"z-index:" + (ch.utils.zIndex += 1) + (ch.utils.hasOwn(conf, "width") ? conf.width : "") + (ch.utils.hasOwn(conf, "height") ? conf.height : "") + "\">");
-		
-		// Create cone
-		if (ch.utils.hasOwn(conf, "cone")) { container.push("<div class=\"ch-cone\"></div>"); }
-		
-		// Create close button
-		if (closable) { container.push("<div class=\"btn close\" style=\"z-index:" + (ch.utils.zIndex += 1) + "\"></div>"); }
-		
-		// Tag close
-		container.push("</div>");
-		
-		// jQuery Object generated from string
-		$container = $(container.join(""));
-		
-		// Close behavior bindings
-		if (closable) {
-			// Close button event delegation
-			$container.bind("click", function (event) {
-				if ($(event.target || event.srcElement).hasClass("close")) { that.innerHide(event); }
-			});
-			
-			// ESC key support
-			ch.utils.document.bind(ch.events.KEY.ESC, function (event) { that.innerHide(event); });
-		}
-		
-		// Efects configuration
-		if (ch.utils.hasOwn(conf, "fx")) { conf.fx = conf.fx; } else { conf.fx = true; }
-
-		// Position component
-		conf.position = conf.position || {};
-		conf.position.element = $container;
-		conf.position.reposition = ch.utils.hasOwn(conf, "reposition") ? conf.reposition : true;
-		
-		that.position = ch.positioner(conf.position);
-		
-		// Return the entire Layout
-		return $container;
-	})();
-
-	/**
-	* Inner reference to content container. Here is where the content will be added.
-	* @protected
-	* @name ch.Floats#$content
-	* @type jQuery
-	* @see ch.Object#content
-	*/
-	that.$content = $("<div class=\"ch-" + that.type + "-content\">").appendTo(that.$container);
-
-	/**
-	* This callback is triggered when async data is loaded into component's content, when ajax content comes back.
-	* @protected
-	* @function
-	* @name ch.Floats#contentCallback
-	* @returns itself
-	*/
-	that["public"].on("contentLoad", function (event, context) {
-		that.$content.html(that.staticContent);
-
-		if (ch.utils.hasOwn(conf, "onContentLoad")) {
-			conf.onContentLoad.call(context, that.staticContent);
-		}
-
-		that.position("refresh");
-	});
-
-	/**
-	* This callback is triggered when async request fails.
-	* @protected
-	* @name ch.Floats#contentError
-	* @function
-	* @returns {this}
-	*/
-	that["public"].on("contentError", function (event, data) {
-
-		that.$content.html(that.staticContent);
-
-		// Get the original that.source
-		var originalSource = that.source;
-
-		if (ch.utils.hasOwn(conf, "onContentError")) {
-			conf.onContentError.call(data.context, data.jqXHR, data.textStatus, data.errorThrown);
-		}
-
-		// Reset content configuration
-		that.source = originalSource;
-		that.staticContent = undefined;
-
-		if (ch.utils.hasOwn(conf, "position")) {
-		   ch.positioner(conf.position);
-		}
-
-	});
-
-	/**
-	* Inner show method. Attach the component layout to the DOM tree.
-	* @protected
-	* @function
-	* @name ch.Floats#innerShow
-	* @returns itself
-	*/
-	that.innerShow = function (event) {
-		if (event) {
-			that.prevent(event);
-		}
-
-		// Avoid showing things that are already shown
-		if (that.active) return;
-
-		// Add layout to DOM tree
-		// Increment zIndex
-		that.$container
-			.appendTo("body")
-			.css("z-index", ch.utils.zIndex++);
-
-		// This make a reflow, but we need that the static content appends to DOM
-		// Get content
-		that.content();
-
-		/**
-		* Triggers when component is visible.
-		* @name ch.Floats#show
-		* @event
-		* @public
-		*/
-		// Show component with effects
-		if (conf.fx) {
-			that.$container.fadeIn("fast", function () {
-				// new callbacks
-				that.trigger("show");
-				// Old callback system
-				that.callbacks('onShow');
-			});
-		} else {
-		// Show component without effects
-			that.$container.removeClass("ch-hide");
-			// new callbacks
-			that.trigger("show");
-			// Old callback system
-			that.callbacks('onShow');
-		}
-		
-		that.position("refresh");
-		
-		that.active = true;
-
-		return that;
-	};
-
-	/**
-	* Inner hide method. Hides the component and detach it from DOM tree.
-	* @protected
-	* @function
-	* @name ch.Floats#innerHide
-	* @returns itself
-	*/
-	that.innerHide = function (event) {
-
-		if (event) {
-			that.prevent(event);
-		}
-
-		if (!that.active) {
-			return;
-		}
-
-		var afterHide = function () {
-
-			that.active = false;
-
-		/**
-		* Triggers when component is not longer visible.
-		* @name ch.Floats#hide
-		* @event
-		* @public
-		*/
-			// new callbacks
-			that.trigger("hide");
-			// Old callback system
-			that.callbacks('onHide');
-
-			that.$container.detach();
-
-		};
-
-		// Show component with effects
-		if (conf.fx) {
-			that.$container.fadeOut("fast", afterHide);
-
-		// Show component without effects
-		} else {
-			that.$container.addClass("ch-hide");
-			afterHide();
-		}
-
-		return that;
-
-	};
-
-	/**
-	* Getter and setter for size attributes on any float component.
-	* @protected
-	* @function
-	* @name ch.Floats#size
-	* @param {String} prop Property that will be setted or getted, like "width" or "height".
-	* @param {String} [data] Only for setter. It's the new value of defined property.
-	* @returns itself
-	*/
-	that.size = function (prop, data) {
-		// Getter
-		if (!data) {
-			return that.conf[prop];
-		}
-		// Setter
-		that.conf[prop] = data;
-		// Container
-		that.$container[prop](data);
-		
-		that.position("refresh");
-		
-		return that["public"];
-	};
-
-
-/**
-* Public Members
-*/
-
-	/**
-	* Triggers the innerShow method, returns the public scope to keep method chaining and sets new content if receive a parameter.
-	* @public
-	* @function
-	* @name ch.Floats#show
-	* @returns itself
-	* @see ch.Floats#content
-	*/
-	that["public"].show = function (content) {
-		if (content !== undefined) { that["public"].content(content); }
-		that.innerShow();
-		return that["public"];
-	};
-
-	/**
-	* Triggers the innerHide method and returns the public scope to keep method chaining.
-	* @public
-	* @function
-	* @name ch.Floats#hide
-	* @returns itself
-	*/
-	that["public"].hide = function () {
-		that.innerHide();
-		return that["public"];
-	};
-
-	/**
-	* Sets or gets the width property of the component's layout. Use it without arguments to get the value. To set a new value pass an argument, could be a Number or CSS value like '300' or '300px'.
-	* @public
-	* @function
-	* @name ch.Floats#width
-	* @returns itself
-	* @see ch.Floats#size
-	* @example
-	* // to set the width
-	* me.width(700);
-	* @example
-	* // to get the width
-	* me.width // 700
-	*/
-	that["public"].width = function (data) {
-		return that.size("width", data) || that["public"];
-	};
-
-	/**
-	* Sets or gets the height of the Float element.
-	* @public
-	* @function
-	* @name ch.Floats#height
-	* @returns itself
-	* @see ch.Floats#size
-	* @example
-	* // to set the height
-	* me.height(300);
-	* @example
-	* // to get the height
-	* me.height // 300
-	*/
-	that["public"].height = function (data) {
-		return that.size("height", data) || that["public"];
-	};
-
-	/**
-	* Returns a Boolean if the component's core behavior is active. That means it will return 'true' if the component is on and it will return false otherwise.
-	* @public
-	* @function
-	* @name ch.Floats#isActive
-	* @returns boolean
-	*/
-	that["public"].isActive = function () {
-		return that.active;
-	};
-
-	return that;
-
-};
+ch.factory("expando");
 /**
 * Forms is a Controller of DOM's HTMLFormElement.
 * @name Form
@@ -3465,16 +5482,15 @@ ch.form = function(conf) {
 		// new callback
 		that.trigger("beforeSubmit");
 
-		// re-asign submit event
-		that.$element.one("submit", submit);
-
 		// Execute all validations
 		validate(event);
 
-		// If an error ocurs prevent default actions
+		// If an error occurs prevent default actions
 		if (!status) {
 			that.prevent(event);
-			event.stopImmediatePropagation();
+	        if (event) {
+	            event.stopImmediatePropagation();
+	        }
 		}
 
 		// OLD CALLBACK SYSTEM!
@@ -3486,14 +5502,6 @@ ch.form = function(conf) {
 			that.callbacks("onSubmit");
 		}
 
-		// OLD CALLBACK SYSTEM!
-		// Is there's no error but there's a onSubmit callback
-		if ( status && ch.utils.hasOwn(conf, "onSubmit")) {
-			// Avoid default actions
-			that.prevent(event);
-			// To execute defined onSubmit callback
-			that.callbacks("onSubmit");
-		}
 		/**
 		* Callback function
 		* @name ch.Form#submit
@@ -3535,10 +5543,8 @@ ch.form = function(conf) {
 
 		var i = 0, j = that.children.length;
 		for(i; i < j; i += 1) {
-		  that.children[i].clear();
+			that.children[i].clear();
 		}
-		
-		status = true;
 
 		status = true;
 
@@ -3687,16 +5693,30 @@ ch.form = function(conf) {
 	if (ch.utils.hasOwn(conf, "onSubmit")) {
 		that.$element.bind('submit', function(event){ that.prevent(event); });
 		// Delete all click handlers asociated to submit button >NATAN: Why?
-			//Because if you want do something on submit, you need that the trigger (submit button)
+			//Because if you want to do something on submit, you need that the trigger (submit button)
 			//don't have events associates. You can add funcionality on onSubmit callback
 		that.$element.find(":submit").unbind('click');
 	};
 
 	// Bind the submit
-	that.$element.bind("submit", function(event) { submit(event) });
+	that.$element.bind("submit", function(event) { submit(event) });
 
 	// Bind the reset
 	that.$element.find(":reset, .resetForm").bind("click", function(event){ reset(event); });
+
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Form#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as form's instance controller:
+	* me.on("ready",function () {
+	*	this.reset();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
@@ -3763,7 +5783,7 @@ ch.helper = function(conf){
 *  Protected Members
 */
 
-	that.content("<span class=\"ico error\">Error: </span><p>Error.</p>");
+	that.content("<p class=\"ch-message ch-error\">Error.</p>");
 
 	/**
 	* Inner show method. Attach the component layout to the DOM tree.
@@ -3830,7 +5850,7 @@ ch.helper = function(conf){
 	that["public"].content = function (message) {
 
 		if (message) {
-			that.content("<span class=\"ico error\">Error: </span><p>" + message + "</p>");
+			that.content("<p class=\"ch-message ch-error\">" + message + "</p>");
 		} else {
 			return that.content();
 		}
@@ -3921,54 +5941,24 @@ ch.helper = function(conf){
 	ch.utils.body.bind(ch.events.LAYOUT.CHANGE, function () { that.position("refresh"); });
 
 	/**
-	* Triggers when the component is ready to use.
+	* Triggers when the component is ready to use (Since 0.8.0).
 	* @name ch.Helper#ready
 	* @event
 	* @public
+	* @since 0.8.0
 	* @example
-	* // Following the first example, using 'me' as Layer's instance controller:
+	* // Following the first example, using 'me' as helper's instance controller:
 	* me.on("ready",function () {
 	*	this.show();
 	* });
 	*/
-	that.trigger("ready");
-
+	setTimeout(function(){ that.trigger("ready")}, 50);
+	
 	return that;
 };
 
 ch.factory("helper");
-
 /**
-* Keyboard event controller utility to know wich keys are begin
-* @abstract
-* @name Keyboard
-* @class Keyboard
-* @memberOF ch
-* @param event
-*/ 
-
-ch.keyboard = function(event) {
-
-	/**
-	* Map with references to key codes.
-	* @private
-	* @name ch.Keyboard#keyCodes
-	* @type object
-	*/ 
-	var keyCodes = {
-		"13": "ENTER",
-		"27": "ESC",
-		"37": "LEFT_ARROW",
-		"38": "UP_ARROW",
-		"39": "RIGHT_ARROW",
-		"40": "DOWN_ARROW"
-	};
-
-	if( !ch.utils.hasOwn(keyCodes, event.keyCode) ) return;
-
-	ch.utils.document.trigger(ch.events.KEY[ keyCodes[event.keyCode] ], event);
-
-};/**
 * Is a contextual floated UI-Object.
 * @name Layer
 * @class Layer
@@ -3986,6 +5976,7 @@ ch.keyboard = function(event) {
 * @param {Number} [conf.showTime] Sets a delay time to show component's contents. By default, the value is 400ms.
 * @param {Number} [conf.hideTime] Sets a delay time to hide component's contents. By default, the value is 400ms.
 * @param {Boolean} [conf.cache] Enable or disable the content cache. By default, the cache is enable.
+* @param {String} [conf.closeHandler] Sets the way ("any" or "button") the Layer close when conf.event is set as "click". By default, the layer close "any".
 * @returns itself
 * @see ch.Tooltip
 * @see ch.Modal
@@ -4026,6 +6017,7 @@ ch.layer = function (conf) {
 	conf.cone = true;
 	conf.closeButton = conf.event === "click";
 	conf.classes = "box";
+	conf.closeHandler = conf.closeHandler || "any";
 	
 	conf.aria = {};
 	conf.aria.role = "tooltip";
@@ -4037,6 +6029,7 @@ ch.layer = function (conf) {
 	conf.position.points = conf.points || "lt lb";
 
 	that.conf = conf;
+
 
 /**
 *	Inheritance
@@ -4105,7 +6098,7 @@ ch.layer = function (conf) {
 				
 				if (target === relatedTarget || relatedTarget === undefined || relatedTarget.parentNode === null || target.nodeName === "SELECT") { return; }
 			}
-	
+
 			ht = setTimeout(that.innerHide, hideTime);
 		},
 
@@ -4143,6 +6136,15 @@ ch.layer = function (conf) {
 */
 
 	/**
+	* It sets the hablity of auto close the component or indicate who closes the component.
+	* @protected
+	* @function
+	* @name ch.Layer#closeHandler
+	* @returns itself
+	*/
+	that.closeHandler = conf.closeHandler;
+
+	/**
 	* Inner show method. Attach the component layout to the DOM tree.
 	* @protected
 	* @function
@@ -4150,15 +6152,22 @@ ch.layer = function (conf) {
 	* @returns itself
 	*/
 	that.innerShow = function (event) {
-
-		// Reset all layers
-		$.each(ch.instances.layer, function (i, e) { e.hide(); });
+		// Reset all layers, except me and not auto closable layers
+		$.each(ch.instances.layer, function (i, e) {
+			if (e !== that["public"] && e.closable()==="any") {
+				e.hide();
+			}
+		});
 		
 		// conf.position.context = that.$element;
 		that.parent.innerShow(event);
 
-		// Click
-		if (conf.event === "click") {
+		// Click in the button
+		if (conf.event === "click" && conf.close === "button") {
+			// Document events
+			that.$container.find(".close").one("click", that.innerHide);
+		// Click anywhere
+		} else if (conf.event === "click") {
 			// Document events
 			ch.utils.document.one("click", that.innerHide);
 			that.$container.bind("click", stopBubble);
@@ -4180,7 +6189,7 @@ ch.layer = function (conf) {
 	*/
 	that.innerHide = function (event) {
 		that.$container.unbind("click", stopBubble).unbind("mouseleave", hideTimer);
-
+		
 		that.parent.innerHide(event);
 	}
 
@@ -4229,6 +6238,23 @@ ch.layer = function (conf) {
 	* me.content("http://chico.com/some/content.html");
 	* @see ch.Object#content
 	*/
+
+	
+	/**
+	* Returns any if the component closes automatic. 
+	* @public
+	* @name ch.Layer#closable
+	* @function
+	* @returns boolean
+	*/
+	that["public"].closable = function (content) {
+		if (content === true && content !== undefined) { 
+			that.closeHandler = "any"; 
+		} else if(content !== undefined) { 
+			that.closeHandler = content; 
+		}
+		return that.closeHandler;
+	};
 
 	/**
 	* Returns a Boolean if the component's core behavior is active. That means it will return 'true' if the component is on and it will return false otherwise.
@@ -4352,177 +6378,24 @@ ch.layer = function (conf) {
 	*/
 
 	/**
-	* Triggers when the component is ready to use.
+	* Triggers when the component is ready to use (Since 0.8.0).
 	* @name ch.Layer#ready
 	* @event
 	* @public
+	* @since 0.8.0
 	* @example
-	* // Following the first example, using 'me' as Layer's instance controller:
+	* // Following the first example, using 'me' as layer's instance controller:
 	* me.on("ready",function () {
 	*	this.show();
 	* });
 	*/
-	that.trigger("ready");
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 
 };
 
-ch.factory("layer");
-/**
-* Manage collections with abstract lists. Create a list of objects, add, get and remove.
-* @abstract
-* @name List
-* @class List
-* @standalone
-* @memberOf ch
-* @param {array} [collection] Constructs a List with an optional initial collection
-*/
-
-ch.list = function( collection ) {
-
-	var that = this;
-
-	/**
-	* @public
-	* @name ch.List#children
-	* @type collection
-	*/
-	var _children = ( collection && ch.utils.isArray( collection ) ) ? collection : [] ;
-
-	/**
-	* Seek members inside the collection by index, query string or object comparison.
-	* @private
-	* @function
-	* @name ch.List#_find
-	* @param {number} [q]
-	* @param {string} [q]
-	* @param {object} [q]
-	* @param {function} [a]
-	* @return object
-	*/
-	var _find = function(q, a) {
-		// null search return the entire collection
-		if ( !q ) {
-			return _children;
-		}
-
-		var c = typeof q;
-		// number? return a specific position
-		if ( c === "number" ) {
-			q--; // _children is a Zero-index based collection
-			return ( a ) ? a.call( that , q ) : _children[q] ;
-		}
-		
-		// string? ok, let's find it
-		var t = size(), _prop, child;
-		if ( c === "string" || c === "object" ) {
-			while ( t-- ) {
-				child = _children[t];
-				// object or string strict equal
-				if ( child === q ) {
-					return ( a ) ? a.call( that , t ) : child ;
-				}
-				// if isn't finded yet
-				// search inside an object for a string
-				for ( _prop in child ) {
-					if ( _prop === q || child[_prop] === q ) {
-						return ( a ) ? a.call( that , t ) : child ;
-					}
-				} // end for
-			} // end while
-		}
-	};
-
-	/**
-	* Adds a new child (or more) to the collection.
-	* @public
-	* @function
-	* @name ch.List#add
-	* @param {string} [child]
-	* @param {object} [child]
-	* @param {array} [child]
-	* @returns number The index of the added child.
-	* @returns collection Returns the entire collecction if the input is an array.
-	*/
-	var add = function( child ) {
-		
-		if ( ch.utils.isArray( child ) ) {
-			var i = 0, t = child.length;
-			for ( i; i < t; i++ ) {
-				_children.push( child[i] );
-			}			
-			return _children;
-		}
-		return _children.push( child );
-	};
-	
-	/**
-	* Removes a child from the collection by index, query string or object comparison.
-	* @public
-	* @function
-	* @name ch.List#rem
-	* @param {number} [q]
-	* @param {string} [q]
-	* @param {object} [q]
-	* @return {object} Returns the removed element
-	*/
-	var rem = function( q ) {
-		// null search return
-		if ( !q ) {
-			return that;
-		}
-		
-		var remove = function( t ) {
-			return _children.splice( t , 1 )[0];
-		}
-
-		return _find( q , remove );
-
-	};
-
-	/**
-	* Get a child from the collection by index, query string or object comparison.
-	* @public
-	* @function
-	* @name ch.List#get
-	* @param {number} [q] Get a child from the collection by index number.
-	* @param {string} [q] Get a child from the collection by a query string.
-	* @param {object} [q] Get a child from the collection by comparing objects.
-	* @return object
-	*/
-	var get = function( q ) {
-
-		return _find( q );
-
-	};
-
-	/**
-	* Get the amount of children from the collection.
-	* @public
-	* @function
-	* @name ch.List#size
-	* @return number
-	*/
-
-	var size = function() {
-		return _children.length;
-	};
-
-	/**
-	* @public
-	*/
-	var that = {
-		children: _children,
-		add: add,
-		rem: rem,
-		get: get,
-		size: size
-	};
-	
-	return that;
-	
-};/**
+ch.factory("layer");/**
 * Menu is a UI-Component.
 * @name Menu
 * @class Menu
@@ -4791,6 +6664,20 @@ ch.menu = function(conf){
 
 	// Select specific item if there are a "selected" parameter on component configuration object
 	if (ch.utils.hasOwn(conf, "selected")) select(conf.selected);
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Menu#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as menu's instance controller:
+	* me.on("ready",function () {
+	*	this.select();
+	* });
+	*/
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 
@@ -4850,6 +6737,19 @@ ch.extend("menu").as("accordion");
 	* @public
 	* @name ch.Accordion#select
 	* @function
+	*/
+
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.Accordion#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as accordion's instance controller:
+	* me.on("ready",function () {
+	*	this.select();
+	* });
 	*/
 /**
 * Is a centered floated window with a dark gray dimmer background. This component let you handle its size, positioning and content.
@@ -5172,7 +7072,7 @@ ch.modal = function (conf) {
 	*	this.show();
 	* });
 	*/
-	that.trigger("ready");
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
@@ -5219,180 +7119,6 @@ ch.extend("modal").as("transition", function (conf) {
 	
 	return conf;
 });
-/**
-* Abstract representation of navs components.
-* @abstract
-* @name Navs
-* @class Navs
-* @standalone
-* @augments ch.Uiobject
-* @memberOf ch
-* @param {object} conf Object with configuration properties
-* @returns itself
-* @see ch.Dropdown
-* @see ch.Expando
-*/
-
-ch.navs = function () {
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @private
-	* @name ch.Navs#that
-	* @type object
-	*/ 
-	var that = this,
-		conf = that.conf;
-	
-	conf.icon = ch.utils.hasOwn(conf, "icon") ? conf.icon : true;
-	conf.open = conf.open || false;
-	conf.fx = conf.fx || false;
-
-/**
-*	Inheritance
-*/
-
-	that = ch.uiobject.call(that);
-	that.parent = ch.clon(that);
-	
-/**
-*	Protected Members
-*/
-	/**
-	* Status of component
-	* @protected
-	* @name ch.Navs#active
-	* @returns boolean
-	*/
-	that.active = false;
-
-	/**
-	* Shows component's content.
-	* @protected
-	* @name ch.Navs#show
-	* @returns itself
-	*/
-	that.show = function (event) {
-		that.prevent(event);
-
-		if (that.active) {
-			return that.hide(event);
-		}
-		
-		that.active = true;
-
-		that.$trigger.addClass("ch-" + that.type + "-trigger-on");
-		/**
-		* onShow callback function
-		* @name ch.Navs#onShow
-		* @event
-		*/
-		// Animation
-		if (conf.fx) {
-			that.$content.slideDown("fast", function () {
-				//that.$content.removeClass("ch-hide");
-			
-				// new callbacks
-				that.trigger("show");
-				// old callback system
-				that.callbacks("onShow");
-			});
-		} else {
-			that.$content.removeClass("ch-hide");
-			// new callbacks
-			that.trigger("show");
-			// old callback system
-			that.callbacks("onShow");
-		}
-		
-		return that;
-	};
-	/**
-	* Hides component's content.
-	* @protected
-	* @name ch.Navs#hide
-	* @returns itself
-	*/
-	that.hide = function (event) {
-		that.prevent(event);
-		
-		if (!that.active) { return; }
-		
-		that.active = false;
-		
-		that.$trigger.removeClass("ch-" + that.type + "-trigger-on");
-		/**
-		* onHide callback function
-		* @name ch.Navs#onHide
-		* @event
-		*/
-		// Animation
-		if (conf.fx) {
-			that.$content.slideUp("fast", function () {
-				//that.$content.addClass("ch-hide");
-				that.callbacks("onHide");
-			});
-		} else {
-			that.$content.addClass("ch-hide");
-			// new callbacks
-			that.trigger("hide");
-			// old callback system
-			that.callbacks("onHide");
-		}
-		
-		return that;
-	};
-
-	/**
-	* Create component's layout
-	* @protected
-	* @name ch.Navs#createLayout
-	*/
-	that.configBehavior = function () {
-		that.$trigger
-			.addClass("ch-" + that.type + "-trigger")
-			.bind("click", function (event) { that.show(event); });
-
-		that.$content.addClass("ch-" + that.type + "-content ch-hide");
-
-		// Visual configuration
-		if (conf.icon) { $("<span class=\"ico\">Drop</span>").appendTo(that.$trigger); }
-		if (conf.open) { that.show(); }
-
-	};
-	
-/**
-*	Default event delegation
-*/
-	that.$element.addClass("ch-" + that.type);
-
-	/**
-	* Triggers when component is visible.
-	* @name ch.Navs#show
-	* @event
-	* @public
-	* @example
-	* me.on("show",function () {
-	*	this.content("Some new content");
-	* });
-	* @see ch.Floats#event:show
-	*/
-
-	/**
-	* Triggers when component is not longer visible.
-	* @name ch.Navs#hide
-	* @event
-	* @public
-	* @example
-	* me.on("hide",function () {
-	*	otherComponent.show();
-	* });
-	* @see ch.Floats#event:hide
-	*/
-
-	return that;
-}
-
 /**
 * Validate numbers.
 * @name Number
@@ -5523,208 +7249,6 @@ ch.extend("watcher").as("price", function (conf) {
 	return conf;
 
 });/**
-* Object represent the abstract class of all Objects.
-* @abstract
-* @name Object
-* @class Object
-* @memberOf ch
-* @see ch.Controllers
-* @see ch.Floats
-* @see ch.Navs
-* @see ch.Watcher
-*/
-
-ch.object = function(){
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @private
-	* @name ch.Object#that
-	* @type object
-	*/
-	var that = this;
-
-	var conf = that.conf;
-
-/**
-*	Public Members
-*/
-
-	/**
-	* This method will be deprecated soon. Triggers a specific callback inside component's context.
-	* @name ch.Object#callbacks
-	* @function
-	* @protected
-	*/
-	// TODO: Add examples!!!
-	that.callbacks = function(when, data) {
-		if( ch.utils.hasOwn(conf, when) ) {
-			var context = ( that.controller ) ? that.controller["public"] : that["public"];
-			return conf[when].call( context, data );
-		};
-	};
-
-	/**
-	* Triggers a specific event within the component public context.
-	* @name ch.Object#trigger
-	* @function
-	* @protected
-	* @param {string} event The event name you want to trigger.
-	* @since version 0.7.1
-	*/
-	that.trigger = function(event, data) {
-		$(that["public"]).trigger("ch-"+event, data);
-	};
-
-	/**
-	* Component's public scope. In this scope you will find all public members.
-	*/
-	that["public"] = {};
-
-	/**
-	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
-	* @public
-	* @name ch.Object#uid
-	* @type number
-	* @ignore
-	*/
-	that["public"].uid = that.uid;
-
-	/**
-	* Reference to a DOM Element. This binding between the component and the HTMLElement, defines context where the component will be executed. Also is usual that this element triggers the component default behavior.
-	* @public
-	* @name ch.Object#element
-	* @type HTMLElement
-	* @ignore
-	*/
-	that["public"].element = that.element;
-
-	/**
-	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
-	* @public
-	* @name ch.Object#type
-	* @type string
-	* @ignore
-	*/
-	that["public"].type = that.type;
-	
-	/**
-	* Triggers a specific event within the component public context.
-	* @name ch.Object#trigger
-	* @function
-	* @public
-	* @param {string} event The event name you want to trigger.
-	* @since version 0.7.1
-	*/
-	that["public"].trigger = function(event, data) {
-		$(that["public"]).trigger("ch-"+event, data);
-	};
-	
-	/**
-	* Triggers a specific event within the component public context.
-	* @name ch.Object#trigger
-	* @function
-	* @protected
-	* @param {string} event The event name you want to trigger.
-	* @since version 0.7.1
-	*/
-	that["public"].trigger = that.trigger;
-
-	/**
-	* Add a callback function from specific event.
-	* @public
-	* @function
-	* @name ch.Object#on
-	* @param {string} event Event name.
-	* @param {function} handler Handler function.
-	* @returns itself
-	* @since version 0.7.1
-	* @example
-	* // Will add a event handler to the "ready" event
-	* me.on("ready", startDoingStuff);
-	*/
-	that["public"].on = function(event, handler) {
-
-		if (event && handler) {
-			$(that["public"]).bind("ch-"+event, handler);
-		}
-
-		return that["public"];
-	};
-
-	/**
-	* Removes a callback function from specific event.
-	* @public
-	* @function
-	* @name ch.Object#off
-	* @param {string} event Event name.
-	* @param {function} handler Handler function.
-	* @returns itself
-	* @since version 0.7.1
-	* @example
-	* // Will remove event handler to the "ready" event
-	* me.off("ready", startDoingStuff);
-	*/
-	that["public"].off = function(event, handler) {
-
-		if (event && handler) {
-			$(that["public"]).unbind("ch-"+event, handler);
-		}
-
-		return that["public"];
-	};
-
-	return that;
-};/**
-* Execute callback when images of a query selection loads
-* @abstract
-* @name onImagesLoads
-* @class onImagesLoads
-* @standalone
-* @memberOf ch
-* @param Array
-* @returns jQuery
-* @example
-* $("img").onImagesLoads(function(){ ... });
-*/
-
-ch.onImagesLoads = function(conf){
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @private
-	* @name ch.onImagesLoads#that
-	* @type object
-	*/
-	var that = this;
-	conf = ch.clon(conf);
-	that.conf = conf;
-	
-	that.$element
-		// On load event
-		.bind("load", function(){
-			setTimeout(function(){
-				if (--that.$element.length <= 0) {
-					that.conf.lambda.call(that.$element, this);
-				};
-			}, 200);
-		})
-		// For each image
-		.each(function(){
-			// Cached images don't fire load sometimes, so we reset src.
-			if (this.complete || this.complete === undefined) {
-				var src = this.src;
-				
-				// Data uri fix bug in web-kit browsers
-				this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-				this.src = src;
-			};
-		});
-	
-	return that;
-};
-
-ch.factory("onImagesLoads");/**
 * Positioner is an utility that centralizes and manages changes related to positioned elements, and returns an utility that resolves positioning for all UI-Objects.
 * @name Positioner
 * @class Positioner
@@ -5931,7 +7455,7 @@ ch.positioner = (function () {
 				offset[1] = parseInt(offset[1], 10);
 
 				// Context by default is viewport
-				if (!ch.utils.hasOwn(conf, "context")) {
+				if (!ch.utils.hasOwn(conf, "context") || !conf.context || conf.context === "viewport") {
 					contextIsNotViewport = false;
 					return ch.viewport;
 				}
@@ -6019,7 +7543,7 @@ ch.positioner = (function () {
 					};
 
 				};
-
+				
 				/**
 				* Recalculates left and top of context and updates offset on context object.
 				* @private
@@ -6033,8 +7557,8 @@ ch.positioner = (function () {
 					// Gets offset of context element
 					var contextOffset = self.element.offset(),
 						size = self.getSize(),
-						scrollLeft = contextOffset.left + offset[0],// - relativeParent.left,
-						scrollTop = contextOffset.top + offset[1];// - relativeParent.top;
+						scrollLeft = contextOffset.left, // + offset[0], // - relativeParent.left,
+						scrollTop = contextOffset.top; // + offset[1]; // - relativeParent.top;
 
 					if (!parentIsBody) {
 						scrollLeft -= relativeParent.left,
@@ -6073,7 +7597,7 @@ ch.positioner = (function () {
 			context = getContext(),
 		
 		/**
-		* 
+		* Reference to know if direct parent is the body HTML element.
 		* @private
 		* @name ch.Positioner#parentIsBody
 		* @type Boolean
@@ -6166,21 +7690,25 @@ ch.positioner = (function () {
 				// TODO: Complete cases: X -> lc, cl, rc, cr. Y -> tm, mt, bm, mb.
 				var calculate = function (reference) {
 
-					var r;
+					// Use Position or Offset of Viewport if position is fixed or absolute respectively
+					var ctx = (!contextIsNotViewport && ch.features.fixed) ? ch.viewport.getPosition() : context,
+					
+					// Returnable value
+						r;
 
 					switch (reference) {
 					// X references
-					case "ll": r = context.left; break;
-					case "lr": r = context.right; break;
-					case "rl": r = context.left - $element.outerWidth(); break;
-					case "rr": r = context.right - $element.outerWidth(); break;
-					case "cc": r = context.left + (context.width / 2) - ($element.outerWidth() / 2); break;
+					case "ll": r = ctx.left + offset[0]; break;
+					case "lr": r = ctx.right + offset[0]; break;
+					case "rl": r = ctx.left - $element.outerWidth() + offset[0]; break;
+					case "rr": r = ctx.right - $element.outerWidth() + offset[0]; break;
+					case "cc": r = ctx.left + (ctx.width / 2) - ($element.outerWidth() / 2) + offset[0]; break;
 					// Y references
-					case "tt": r = context.top; break;
-					case "tb": r = context.bottom; break;
-					case "bt": r = context.top - $element.outerHeight(); break;
-					case "bb": r = context.bottom - $element.outerHeight(); break;
-					case "mm": r = context.top + (context.height / 2) - ($element.outerHeight() / 2); break;
+					case "tt": r = ctx.top + offset[1]; break;
+					case "tb": r = ctx.bottom + offset[1]; break;
+					case "bt": r = ctx.top - $element.outerHeight() + offset[1]; break;
+					case "bb": r = ctx.bottom - $element.outerHeight() + offset[1]; break;
+					case "mm": r = ctx.top + (ctx.height / 2) - ($element.outerHeight() / 2) + offset[1]; break;
 					}
 
 					return r;
@@ -6280,19 +7808,30 @@ ch.positioner = (function () {
 		*/
 			draw = function () {
 
-				if (ch.utils.getStyles($element[0], "width") !== "auto") {
-					$element.css({ left: 0, top: 0 });
-				}
+				// New element position
+				var coordinates,
+
+				// Width of element is elastic?
+					elasticWidth = ch.utils.getStyles($element[0], "width") !== "auto",
+					
+				// Removes all classnames related to friendly positions and adds classname for new points
+				// TODO: improve this method. maybe knowing which one was the last added classname
+					updateClassName = function ($element) {
+						$element.removeClass("ch-left ch-top ch-right ch-bottom ch-center").addClass(friendly);
+					};
+				
+				// Reset position of elastic width elements for correct calculations
+				if (elasticWidth) { $element.css({ "left": 0, "top": 0 }); }
 
 				// Gets definitive coordinates for element repositioning
-				var coordinates = getPosition();
+				coordinates = getPosition();
 
 				// Coordinates equal to last coordinates means that there aren't changes on position
 				// TODO: Avoid redraw when corrdinates are same. We set to 0 the
 				// css left and top coordinates for correct width calculations
 				if (coordinates.left === lastCoordinates.left && coordinates.top === lastCoordinates.top) {
-					if (ch.utils.getStyles($element[0], "width") !== "auto") {
-						$element.css({ left: lastCoordinates.left, top: lastCoordinates.top });
+					if (elasticWidth) {
+						$element.css({ "left": lastCoordinates.left, "top": lastCoordinates.top });
 					}
 
 					return;
@@ -6301,14 +7840,8 @@ ch.positioner = (function () {
 				// If there are changes, it stores new coordinates on lastCoordinates
 				lastCoordinates = coordinates;
 
-				// Removes all classnames related to friendly positions and adds classname for new points
-				// TODO: improve this method. maybe knowing which one was the last added classname
-				var updateClassName = function (element) {
-					element.removeClass("ch-left ch-top ch-right ch-bottom ch-center").addClass(friendly);
-				};
-
 				// Element reposition (Updates element position based on new coordinates)
-				updateClassName($element.css({ left: coordinates.left, top: coordinates.top }));
+				updateClassName($element.css({ "left": coordinates.left, "top": coordinates.top }));
 
 				// Context class-names
 				if (contextIsNotViewport) { updateClassName(context.element); }
@@ -6338,6 +7871,57 @@ ch.positioner = (function () {
 
 				// Calculates coordinates and redraws if it's necessary	
 				draw();
+			},
+
+		/**
+		* Listen to LAYOUT.CHANGE and VIEWPORT.CHANGE events and recalculate data as needed.
+		* @private
+		* @function
+		* @name ch.Positioner#changesListener
+		*/
+			changesListener = function (event) {
+				// Only recalculates if element is visible
+				if (!$element.is(":visible")) { return; }
+	
+				// If context isn't the viewport...
+				if (contextIsNotViewport) {
+					// On resize and layout change, recalculates relative parent position
+					relativeParent.getOffset();
+	
+					// Recalculates its position and size
+					context.getOffset();
+				}
+	
+				draw();
+			},
+
+		/**
+		* Position "element" as fixed or absolute as needed.
+		* @private
+		* @function
+		* @name ch.Positioner#addCSSproperties
+		*/
+			addCSSproperties = function () {
+
+				// Fixed position behavior
+				if (!contextIsNotViewport && ch.features.fixed) {
+
+					// Sets position of element as fixed to avoid recalculations
+					$element.css("position", "fixed");
+
+					// Unbind reposition recalculations (scroll, resize and changeLayout)
+					ch.utils.window.unbind(ch.events.VIEWPORT.CHANGE + " " + ch.events.LAYOUT.CHANGE, changesListener);
+
+				// Absolute position behavior
+				} else {
+
+					// Sets position of element as absolute to allow continuous positioning
+					$element.css("position", "absolute");
+
+					// Bind reposition recalculations (scroll, resize and changeLayout)
+					ch.utils.window.bind(ch.events.VIEWPORT.CHANGE + " " + ch.events.LAYOUT.CHANGE, changesListener);
+				}
+
 			},
 
 		/**
@@ -6390,8 +7974,14 @@ ch.positioner = (function () {
 					// Sets conf value
 					conf.context = o.context;
 
+					// Clear the conf.context variable
+					if (o.context === "viewport") { conf.context = undefined; }
+
 					// Regenerate the context object
 					context = getContext();
+					
+					// Update CSS properties to element (position fixed or absolute)
+					addCSSproperties();
 				}
 
 				// Reset
@@ -6402,7 +7992,7 @@ ch.positioner = (function () {
 			// Refresh current position
 			case "string":
 				if (o !== "refresh") {
-					alert("Chico UI error: expected to find \"refresh\" parameter on position() method.");
+					alert("Chico UI error: expected to find \"refresh\" parameter on position() method of Positioner component.");
 				}
 
 				// Reset
@@ -6412,6 +8002,7 @@ ch.positioner = (function () {
 
 			// Gets current configuration
 			case "undefined":
+			default:
 				r = {
 					"context": context.element,
 					"element": $element,
@@ -6430,63 +8021,16 @@ ch.positioner = (function () {
 		* @ignore
 		*/
 
-		// Sets position of element as absolute to allow positioning
-		$element.css("position", "absolute");
+		// Apply CSS properties to element (position fixed or absolute)
+		addCSSproperties();
 
 		// Inits positioning
 		init();
 
-		// Layout change and Viewport change, event listeners
-		ch.utils.window.bind(ch.events.VIEWPORT.CHANGE + " " + ch.events.LAYOUT.CHANGE, function (event) {
-			// Only recalculates if element is visible
-			if (!$element.is(":visible")) { return; }
-
-			// If context isn't the viewport...
-			if (contextIsNotViewport) {
-				// On resize and layout change, recalculates relative parent position
-				relativeParent.getOffset();
-
-				// Recalculates its position and size
-				context.getOffset();
-			}
-
-			draw();
-		});
-
 		return that.position;
 	};
 
-}());
-/**
-* Pre-load is an utility to preload images on browser's memory. An array of sources will iterate and preload each one, a single source will do the same thing.
-* @abstract
-* @name Preload
-* @class Preload
-* @standalone
-* @memberOf ch
-* @param {array} [arr] Collection of image sources
-* @param {string} [str] A single image source
-* @example
-* ch.preload(["img1.jpg","img2.jpg","img3.png"]);
-* @example
-* ch.preload("logo.jpg");
-*/
-ch.preload = function(arr) {
-
-	if (typeof arr === "string") {
-		arr = (arr.indexOf(",") > 0) ? arr.split(",") : [arr] ;
-	}
-
-	for (var i=0;i<arr.length;i++) {
-
-		var o = document.createElement("object");
-			o.data = arr[i]; // URL
-
-		var h = document.getElementsByTagName("head")[0];
-			h.appendChild(o);
-			h.removeChild(o); 
-	}
-};/**
+}());/**
 * Creates required validations.
 * @name Required
 * @class Required
@@ -6514,7 +8058,7 @@ ch.extend("watcher").as("required", function(conf) {
 
 			var $e = $(e);
 
-			var tag = ( $e.hasClass("options")) ? "OPTIONS" : e.tagName;
+			var tag = ( $e.hasClass("options") || $e.hasClass("ch-form-options")) ? "OPTIONS" : e.tagName;
 			switch (tag) {
 				case 'OPTIONS':
 					return $e.find('input:checked').length !== 0;
@@ -6522,7 +8066,7 @@ ch.extend("watcher").as("required", function(conf) {
 
 				case 'SELECT':
 					var val = $e.val();
-					return (val != "-1");
+					return (val != "-1" && val != "");
 				break;
 
 				case 'INPUT':
@@ -6562,7 +8106,7 @@ ch.extend("watcher").as("string", function (conf) {
 	conf.condition = {
 		name: "string",
 		// the following regular expression has the utf code for the lating characters
-		// the ranges are A,EI,O,U,a,ei,o,u,Ã§,Ã‡ please for reference see http://www.fileformat.info/info/charset/UTF-8/list.htm
+		// the ranges are A,EI,O,U,a,ei,o,u,ç,Ç please for reference see http://www.fileformat.info/info/charset/UTF-8/list.htm
 		patt: /^([a-zA-Z\u00C0-\u00C4\u00C8-\u00CF\u00D2-\u00D6\u00D9-\u00DC\u00E0-\u00E4\u00E8-\u00EF\u00F2-\u00F6\u00E9-\u00FC\u00C7\u00E7\s]*)$/,
 		message: conf.msg || conf.message
 	};
@@ -6961,6 +8505,21 @@ ch.tabNavigator = function (conf) {
 			break;
 		};
 	};
+	
+	/**
+	* Triggers when the component is ready to use (Since 0.8.0).
+	* @name ch.TabNavigator#ready
+	* @event
+	* @public
+	* @since 0.8.0
+	* @example
+	* // Following the first example, using 'me' as tabNavigator's instance controller:
+	* me.on("ready",function () {
+	*	this.show();
+	* });
+	*/
+	//This avoit to trigger execute after the component was instanciated
+	setTimeout(function(){that.trigger("ready")}, 50);
 
 	return that;
 
@@ -7262,6 +8821,14 @@ ch.tooltip = function (conf) {
 	* @returns itself
 	*/
 	that.innerShow = function (event) {
+		
+		// Reset all tooltip, except me
+		$.each(ch.instances.tooltip, function (i, e) {
+			if (e !== that["public"]) {
+				e.hide();
+			}
+		});
+		
 		// IE8 remembers the attribute even when is removed, so ... empty the attribute to fix the bug.
 		that.element[attrReference] = "";
 
@@ -7447,1343 +9014,17 @@ ch.tooltip = function (conf) {
 	* @event
 	* @public
 	* @example
+	* // Following the first example, using 'me' as tooltip's instance controller:
 	* me.on("ready",function () {
 	*	this.show();
 	* });
 	*/
-	that.trigger("ready");
+	setTimeout(function(){ that.trigger("ready")}, 50);
 
 	return that;
 };
 
 ch.factory("tooltip");/**
-* Object represent the abstract class of all UI Objects.
-* @abstract
-* @name Uiobject
-* @class Uiobject
-* @augments ch.Object
-* @memberOf ch
-* @see ch.Controllers
-* @see ch.Floats
-* @see ch.Navs
-* @see ch.Watcher
-*/
-
-ch.uiobject = function(){
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @private
-	* @name ch.Uiobject#that
-	* @type object
-	*/
-	var that = this;
-
-	var conf = that.conf;
-	
-
-/**
-*	Inheritance
-*/
-
-	that = ch.object.call(that);
-	that.parent = ch.clon(that);
-
-
-
-/**
-*	Public Members
-*/
-
-	/**
-	* Component static content.
-	* @public
-	* @name ch.Uiobject#staticContent
-	* @type string
-	*/
-	that.staticContent;
-
-	/**
-	* DOM Parent of content, this is useful to attach DOM Content when float is hidding.
-	* @public
-	* @name ch.Uiobject#DOMParent
-	* @type HTMLElement
-	*/
-	that.DOMParent;
-
-	/**
-	* Component original content.
-	* @public
-	* @name ch.Uiobject#originalContent
-	* @type HTMLElement
-	*/
-	that.originalContent;
-
-	/**
-	* Set and get the content of a component. With no arguments will behave as a getter function. Send any kind of content and will be a setter function. Use a valid URL for AJAX content, use a CSS selector for a DOM content or just send a static content like HTML or Text.
-	* @name ch.Uiobject#content
-	* @protected
-	* @function
-	* @param {string} [content] Could be a simple text, html or a url to get the content with ajax.
-	* @returns {string} content
-	* @requires ch.Cache
-	* @example
-	* // Simple static content
-	* $(element).layer().content("Some static content");
-	* @example
-	* // Get DOM content
-	* $(element).layer().content("#hiddenContent");
-	* @example
-	* // Get AJAX content
-	* $(element).layer().content("http://chico.com/content/layer.html");
-	*/
-	that.content = function(content) {
-
-		var _get = (content) ? false : true,
-
-			// Local argument
-			content = content,
-			// Local isURL
-			sourceIsUrl = ch.utils.isUrl(that.source),
-			// Local isSelector
-			sourceIsSelector = ch.utils.isSelector(that.source),
-			// Local inDom
-			sourceInDom = (!sourceIsUrl) ? ch.utils.inDom(that.source) : false,
-			// Get context, could be a single component or a controller
-			context = ( ch.utils.hasOwn(that, "controller") ) ? that.controller : that["public"],
-			// undefined, for comparison.
-			undefined,
-			// Save cache configuration
-			cache = ( ch.utils.hasOwn(conf, "cache") ) ? conf.cache : true;
-
-		/**
-		* Get content
-		*/
-
-		// return defined content
-		if (_get) {
-
-			// no source, no content
-			if (that.source === undefined) {
-				that.staticContent = "<p>No content defined for this component</p>";
-				that.trigger("contentLoad");
-
-				return;
-			}
-
-			// First time we need to get the content.
-			// Is cache is off, go and get content again.
-			// Yeap, recursive.
-			if (!cache || that.staticContent === undefined) {
-				that.content(that.source);
-				return;
-			}
-
-			// Get data from cache if the staticContent was defined
-			if (cache && that.staticContent) {
-				var fromCache = ch.cache.get(that.source);
-
-				// Load content from cache
-				if (fromCache && that.staticContent != fromCache) {
-					that.staticContent = fromCache;
-
-					that.trigger("contentLoad");
-
-					// Return and load content from cache
-					return;
-				}
-
-				// Return and show the latest content that was loaded
-				return;
-			}
-		}
-
-		/**
-		* Set content
-		*/
-
-		// Reset cache to overwrite content
-		conf.cache = false;
-
-		// Local isURL
-		var isUrl = ch.utils.isUrl(content),
-			// Local isSelector
-			isSelector = ch.utils.isSelector(content),
-			// Local inDom
-			inDom = (!isUrl) ? ch.utils.inDom(content) : false;
-
-		/* Evaluate static content*/
-
-		// Set 'that.staticContent' and overwrite 'that.source'
-		// just in case you want to update DOM or AJAX Content.
-
-		that.staticContent = that.source = content;
-
-		/* Evaluate AJAX content*/
-
-		if (isUrl) {
-
-			// First check Cache
-			// Check if this source is in our cache
-			if (cache) {
-				var fromCache = ch.cache.get(that.source);
-				if (fromCache) {
-					conf.cache = cache;
-					that.staticContent = fromCache;
-					that.trigger("contentLoad", context);
-					return;
-				}
-			}
-
-			var _method, _serialized, _params = "x=x";
-
-			// If the trigger is a form button, serialize its parent to send data to the server.
-			if (that.$element.attr('type') == 'submit') {
-				_method = that.$element.parents('form').attr('method') || 'GET';
-				_serialized = that.$element.parents('form').serialize();
-				_params = _params + ((_serialized != '') ? '&' + _serialized : '');
-			};
-
-			// Set ajax config
-			// On IE (6-7) "that" reference losts for second time
-			// Why?? I don't know... but with a setTimeOut() works fine!
-			setTimeout(function(){
-
-				$.ajax({
-					url: that.source,
-					type: _method || 'GET',
-					data: _params,
-					// each component could have a different cache configuration
-					cache: cache,
-					async: true,
-					beforeSend: function(jqXHR){
-						// Ajax default HTTP headers
-						jqXHR.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-					},
-					success: function(data, textStatus, jqXHR){
-						// Save data as staticContent
-						that.staticContent = data;
-
-						// Use the contentLoad callback.
-						that.trigger("contentLoad", context);
-
-						// Save new staticContent to the cache
-						if (cache) {
-							ch.cache.set(that.source, that.staticContent);
-						}
-
-					},
-					error: function(jqXHR, textStatus, errorThrown){
-						that.staticContent = "<p>Error on ajax call.</p>";
-
-						var data = {
-							"context": context,
-							"jqXHR": jqXHR,
-							"textStatus": textStatus,
-							"errorThrown": errorThrown
-						};
-
-						// Use the contentError callback.
-						that.trigger("contentError", data);
-					}
-				});
-
-			}, 0);
-
-			// Return Spinner and wait for async callback
-			that.$content.html("<div class=\"loading\"></div>");
-			that.staticContent = undefined;
-
-		} else {
-
-			/* Evaluate DOM content*/
-
-			if (isSelector && inDom) {
-
-				// Save original DOMFragment.
-				that.originalContent = $(content);
-
-				// Save DOMParent, so we know where to re-insert the content.
-				that.DOMParent = that.originalContent.parent();
-
-				// Save a clone to original DOM content
-				that.staticContent = that.originalContent.clone().removeClass("ch-hide");
-
-			}
-
-			// Save new data to the cache
-			if (cache) {
-				ch.cache.set(that.source, that.staticContent);
-			}
-
-			// First time we need to set the callbacks that append and remove the original content.
-			if (that.originalContent && that.originalContent.selector == that.source) {
-
-				// Remove DOM content from DOM to avoid ID duplications
-				that["public"].on("show", function() {
-					that.originalContent.detach();
-				});
-
-				// Returns DOMelement to DOM
-				that["public"].on("hide", function(){
-					that.originalContent.appendTo(that.DOMParent||"body");
-				});
-			}
-		}
-
-		/* Set previous cache configuration*/
-		conf.cache = cache;
-
-		// trigger contentLoad callback for DOM and Static content.
-		if (that.staticContent !== undefined) {
-			that.trigger("contentLoad", context);
-		}
-
-	};
-
-	/**
-	* Change component's position configuration. If a "refresh" {string} is recived, will refresh component's positioning with the same configuration. You can send an {object} with a new configuration.
-	* @name ch.Uiobject#position
-	* @function
-	* @protected
-	* @param {string} ["refresh"] Refresh
-	* @returns {object} Configuration object if no arguments are sended.
-	* @see ch.Positioner
-	*/
-	// TODO: Add examples!!!
-	that.position = function(o) {
-
-		switch(typeof o) {
-
-			case "object":
-				conf.position.context = o.context || conf.position.context;
-				conf.position.points = o.points || conf.position.points;
-				conf.position.offset = o.offset || conf.position.offset;
-				conf.position.fixed = o.fixed || conf.position.fixed;
-
-				ch.positioner(conf.position);
-				return that["public"];
-				break;
-
-			case "string":
-				if(o != "refresh") {
-					alert("Chico UI error: position() expected to find \"refresh\" parameter.");
-				}
-
-				ch.positioner(conf.position);
-
-				return that["public"];
-				break;
-
-			case "undefined":
-				return conf.position;
-				break;
-		};
-
-	};
-
-	/**
-	* Prevent propagation and default actions.
-	* @name ch.Uiobject#prevent
-	* @function
-	* @protected
-	* @param {event} event Recieves a event object
-	*/
-	that.prevent = function(event) {
-
-		if (event && typeof event == "object") {
-			event.preventDefault();
-			event.stopPropagation();
-		};
-
-		return that;
-	};
-
-/**
-*	Public Members
-*/
-	
-	/**
-	* Component's public scope. In this scope you will find all public members.
-	*/
-
-	/**
-	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
-	* @public
-	* @name ch.Uiobject#uid
-	* @type number
-	* @ignore
-	*/
-
-	/**
-	* Reference to a DOM Element. This binding between the component and the HTMLElement, defines context where the component will be executed. Also is usual that this element triggers the component default behavior.
-	* @public
-	* @name ch.Uiobject#element
-	* @type HTMLElement
-	* @ignore
-	*/
-
-	/**
-	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
-	* @public
-	* @name ch.Uiobject#type
-	* @type string
-	* @ignore
-	*/
-
-	/**
-	* Sets or gets positioning configuration. Use it without arguments to get actual configuration. Pass an argument to define a new positioning configuration.
-	* @public
-	* @name ch.Uiobject#position
-	* @example
-	* // Change component's position.
-	* me.position({ 
-	*	  offset: "0 10",
-	*	  points: "lt lb"
-	* });
-	* @see ch.Uiobject#position
-	*/
-	that["public"].position = that.position;
-
-	/**
-	* Sets and gets component content. To get the defined content just use the method without arguments, like 'me.content()'. To define a new content pass an argument to it, like 'me.content("new content")'. Use a valid URL to get content using AJAX. Use a CSS selector to get content from a DOM Element. Or just use a String with HTML code.
-	* @public
-	* @name ch.Uiobject#content
-	* @function
-	* @param {string} content Static content, DOM selector or URL. If argument is empty then will return the content.
-	* @example
-	* // Get the defined content
-	* me.content();
-	* @example
-	* // Set static content
-	* me.content("Some static content");
-	* @example
-	* // Set DOM content
-	* me.content("#hiddenContent");
-	* @example
-	* // Set AJAX content
-	* me.content("http://chico.com/some/content.html");
-	*/
-	that["public"].content = function(content){
-		if (content) { // sets
-			// Reset content data
-			that.source = content;
-			that.staticContent = undefined;
-
-			if (that.active) {
-				that.content(content);
-			}
-
-			return that["public"];
-
-		} else { // gets
-			return that.staticContent;
-		}
-	};
-	
-	/**
-	* Triggers a specific event within the component public context.
-	* @name ch.Object#trigger
-	* @function
-	* @public
-	* @param {string} event The event name you want to trigger.
-	* @since version 0.7.1
-	*/
-	
-	/**
-	* Add a callback function from specific event.
-	* @public
-	* @function
-	* @name ch.Object#on
-	* @param {string} event Event name.
-	* @param {function} handler Handler function.
-	* @returns itself
-	* @since version 0.7.1
-	* @example
-	* // Will add a event handler to the "ready" event
-	* me.on("ready", startDoingStuff);
-	*/
-
-	/**
-	* Removes a callback function from specific event.
-	* @public
-	* @function
-	* @name ch.Object#off
-	* @param {string} event Event name.
-	* @param {function} handler Handler function.
-	* @returns itself
-	* @since version 0.7.1
-	* @example
-	* // Will remove event handler to the "ready" event
-	* me.off("ready", startDoingStuff);
-	*/
-
-	return that;
-};/**
-* Validator is a validation engine for html forms elements.
-* @abstract
-* @name Validator
-* @class Validator
-* @augments ch.Object
-* @requires ch.Condition
-* @memberOf ch
-* @param {Object} conf Object with configuration properties.
-* @param {Object} conf.conditions Object with conditions.
-* @returns itself
-* @see ch.Condition
-*/
-
-ch.validator = function(conf) {
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @protected
-	* @name ch.Validator#that
-	* @type Object
-	*/
-	var that = this;
-	conf = ch.clon(conf);
-	that.conf = conf;	
-
-/**
-* Inheritance
-*/
-
-	that = ch.object.call(that);
-	that.parent = ch.clon(that);
-
-/**
-* Private Members
-*/
-	var conditions = (function(){
-		var c = {}; // temp collection
-		var condition = ch.condition.call(that["public"], conf.condition);
-
-		c[condition.name] = condition;
-
-		// return all the configured conditions
-		return c;
-	})(); // Love this ;)
-
-	/**
-	* Search for instances of Validators with the same trigger, and then merge it's properties with it.
-	* @private
-	* @name ch.Validator#checkInstance
-	* @function
-	* @returns Object
-	*/
-	var checkInstance;
-	if (checkInstance = function() {
-
-		var instance, instances = ch.instances.validator;
-		if ( instances && instances.length > 0 ) {
-			for (var i = 0, j = instances.length; i < j; i+=1) {
-				instance = instances[i];
-
-				if (instance.element !== that.element) {
-
-					continue;
-				}
-
-				// Extend instance's conditions
-				instance.extend(conditions);
-
-				// To let know the ch.Factory that already exists,
-				// this way we avoid to have duplicated references.
-				return {
-					exists: true,
-					object: instance
-				}
-			}
-		}
-	}()){
-		return checkInstance;
-	};
-
-	var validate = function(value) {
-
-		if (!that.enabled) { return true; }
-
-		var condition, tested, empty, val, message, required = conditions["required"];
-
-		// Avoid fields that aren't required when they are empty or de-activated
-		if (!required && value === "" && that.active === false) { return {"status": true}; }
-
-		if (that.enabled && (!that.active || value !== "" || required)) {
-			/**
-			* Triggers before start validation process.
-			* @name ch.Validator#beforeValidate
-			* @event
-			* @public
-			* @example
-			* me.on("beforeValidate",function(){
-			*	submitButton.disable();
-			* });
-			*/
-			// old callback system
-			that.callbacks('beforeValidate');
-			// new callback
-			that.trigger("beforeValidate");
-
-			// for each condition
-			for (condition in conditions){
-
-				val = ((condition === "required") ? that.element : value);
-				tested = test(condition, val);
-
-				// return false if any test fails,
-				if (!tested) {
-
-					/**
-					* Triggers when an error occurs on the validation process.
-					* @name ch.Validator#error
-					* @event
-					* @public
-					* @example
-					* me.on("error",function(event, condition){
-					*	errorModal.show();
-					* });
-					*/
-					// old callback system
-					that.callbacks('onError', condition);
-					// new callback
-					that.trigger("error", condition);
-
-					that.active = true;
-
-					// stops the proccess
-					//return false;
-					return {
-						"status": false,
-						"condition": condition,
-						"msg": conditions[condition].message
-					}
-				};
-			}
-		}
-
-		// Status OK (with previous error)
-		if (that.active || !that.enabled) {
-			// Public status OK
-			that.active = false;
-		}
-
-		/**
-		* Triggers when the validation process ends.
-		* @name ch.Validator#afterValidate
-		* @event
-		* @public
-		* @example
-		* me.on("afterValidate",function(){
-		*	submitButton.disable();
-		* });
-		*/
-		// old callback system
-		that.callbacks('afterValidate');
-		// new callback
-		that.trigger("afterValidate");
-
-		// It's all good ;)
-		//return true;
-		return {
-			"status": true
-		}
-	}
-
-	/**
-	* Test a condition looking for error.
-	* @private
-	* @name ch.Validator#test
-	* @see ch.Condition
-	*/
-	var test = function(condition, value){
-		
-		if (value === "" && condition !== "required") { return true };
-		
-		var isOk = false,
-			condition = conditions[condition];
-
-		isOk = condition.test(value);
-
-		return isOk;
-		
-	};
-
-/**
-* Protected Members
-*/
-
-	/**
-	* Flag that let you know if there's a validation going on.
-	* @protected
-	* @name ch.Validator#active
-	* @type boolean
-	*/
-	that.active = false;
-
-	/**
-	* Flag that let you know if the all conditions are enabled or not.
-	* @protected
-	* @name ch.Validator#enabled
-	* @type boolean
-	*/
-	that.enabled = true;
-
-/**
-*	Public Members
-*/
-
-	/**
-	* The 'uid' is the Chico's unique instance identifier. Every instance has a different 'uid' property. You can see its value by reading the 'uid' property on any public instance.
-	* @public
-	* @name ch.Validator#uid
-	* @type Number
-	*/
-	
-	/**
-	* This public property defines the component type. All instances are saved into a 'map', grouped by its type. You can reach for any or all of the components from a specific type with 'ch.instances'.
-	* @public
-	* @name ch.Validator#type
-	* @type String
-	*/
-	that["public"].type = "validator";
-
-	/**
-	* This public Map saves all the validation configurations from this instance.
-	* @public
-	* @name ch.Validator#conditions
-	* @type object
-	*/
-	that["public"].conditions = conditions;
-
-	/**
-	* Active is a boolean property that let you know if there's a validation going on.
-	* @public
-	* @name ch.Validator#isActive
-	* @function
-	* @returns itself
-	*/
-	that["public"].isActive = function() {
-		return that.active;
-	};
-
-	/**
-	* Let you keep chaining methods.
-	* @public
-	* @name ch.Validator#and
-	* @function
-	* @returns itself
-	*/
-	that["public"].and = function(){
-		return that.$element;
-	};
-
-	/**
-	* Merge its conditions with a new conditions of another instance with the same trigger.
-	* @public
-	* @name ch.Validator#extend
-	* @function
-	* @returns itself
-	*/
-	that["public"].extend = function(input){
-		$.extend(conditions, input);
-
-		return that["public"];
-	};
-
-	/**
-	* Clear all active validations.
-	* @public
-	* @name ch.Validator#clear
-	* @function
-	* @returns itself
-	*/
-	that["public"].clear = function() {
-		that.active = false;
-
-		return that["public"];
-	};
-
-	/**
-	* Runs all configured conditions and returns an object with a status value, condition name and a message.
-	* @public
-	* @function
-	* @name ch.Validator#validate
-	* @returns Status Object
-	*/
-	that["public"].validate = function(value){
-		return validate(value);
-	}
-
-	/**
-	* Turn on Validator engine or an specific condition.
-	* @public
-	* @name ch.Validator#enable
-	* @function
-	* @returns itself
-	*/
-	that["public"].enable = function(condition){
-		if (condition && conditions[condition]){
-			// Enable specific condition
-			conditions[condition].enable();
-		} else {
-			// enable all
-			that.enabled = true;
-			for (condition in conditions){
-				conditions[condition].enable();
-			}
-		}
-		return that["public"];
-	}
-
-	/**
-	* Turn on Validator engine or an specific condition.
-	* @public
-	* @name ch.Validator#disable
-	* @function
-	* @returns itself
-	*/
-	that["public"].disable = function(condition){
-		if (condition && conditions[condition]){
-			// disable specific condition
-			conditions[condition].disable();
-		} else {
-			// disable all
-			that.enabled = false;
-			for (condition in conditions){
-				conditions[condition].disable();
-			}
-		}
-		return that["public"];
-	}
-
-/**
-*	Default event delegation
-*/
-	/**
-	* Triggers when the component is ready to use.
-	* @name ch.Validator#ready
-	* @event
-	* @public
-	* @example
-	* // Following the first example, using 'me' as modal's instance controller:
-	* me.on("ready",function(){
-	*	this.show();
-	* });
-	*/
-	that.trigger("ready");
-
-	return that;
-};
-ch.factory("validator");
-/**
-* Viewer UI-Component for images, videos and maps.
-* @name Viewer
-* @class Viewer
-* @augments ch.Controllers
-* @requires ch.Carousel
-* @memberOf ch
-* @requires ch.onImagesLoads
-* @param {object} conf Object with configuration properties
-* @returns itself
-*/
-
-ch.viewer = function (conf) {
-
-	/**
-	* Reference to a internal component instance, saves all the information and configuration properties.
-	* @private
-	* @name ch.Viewer#that
-	* @type object
-	*/
-	var that = this;
-	
-	conf = ch.clon(conf);
-	
-	that.conf = conf;
-
-/**
-*	Inheritance
-*/
-
-	that = ch.controllers.call(that);
-	that.parent = ch.clon(that);
-	
-/**
-*	Private Members
-*/
-
-	/**
-	* Reference to the viewer's visual object.
-	* @private
-	* @name ch.Viewer#$viewer
-	* @type jQuery
-	*/
-	var $viewer = that.$element.addClass("ch-viewer"),
-	
-	/**
-	* Reference to the viewer's width.
-	* @private
-	* @name ch.Viewer#width
-	* @type Number
-	*/
-		viewerWidth = $viewer.outerWidth(),
-	
-	/**
-	* Reference to the viewer's height.
-	* @private
-	* @name ch.Viewer#height
-	* @type Number
-	*/
-		viewerHeight = $viewer.outerHeight(),
-
-	/**
-	* Reference to the viewer's internal content.
-	* @private
-	* @name ch.Viewer#$content
-	* @type jQuery
-	*/
-		$content = $viewer.children().addClass("ch-viewer-content"),
-
-	/**
-	* Reference to the viewer's display element.
-	* @private
-	* @name ch.Viewer#$display
-	* @type jQuery
-	*/
-		$display = $("<div class=\"ch-viewer-display ch-carousel\">")
-			.append($content)
-			.appendTo($viewer)
-			.carousel({
-				width: viewerWidth,
-				arrows: false,
-				onMove: function () {
-					
-					var page = this.page(),
-					
-						currentHeight = $($itemsChildren[page - 1]).height();
-						
-					that.move(page);
-	
-					// Resize display
-					$viewer.find(".ch-mask").eq(0).height(currentHeight);
-				}
-			}),
-
-	/**
-	* Collection of viewer's children.
-	* @private
-	* @name ch.Viewer#items
-	* @type collection
-	*/
-		$items = $content.children(),
-
-	/**
-	* Amount of children.
-	* @private
-	* @name ch.Viewer#itemsAmount
-	* @type number
-	*/
-		itemsAmount = $items.length,
-
-	/**
-	* Collection of anchors finded on items collection.
-	* @private
-	* @name ch.Viewer#$itemsAnchor
-	* @type collection
-	*/
-		$itemsAnchor = $items.children("a"),
-
-	/**
-	* Collection of references to HTMLIMGElements or HTMLObjectElements.
-	* @private
-	* @name ch.Viewer#$itemsChildren
-	* @type object
-	*/
-		$itemsChildren = $items.find("img, object");
-
-	/**
-	* Iniatilizes Zoom component on each anchor
-	* @private
-	* @name ch.Viewer#instanceZoom
-	* @type object
-	*/
-		instanceZoom = function () {
-	
-			var size = {};
-				
-				size.width = conf.zoomWidth || $viewer.width();
-				
-				if (size.width === "auto") {
-					size.width = $viewer.parent().width() - $viewer.outerWidth() - 20; // 20px of Zoom default offset
-				}
-	
-				size.height = conf.zoomHeight || $viewer.height();
-	
-			$itemsAnchor.each(function (i, e) {
-	
-				// Initialize zoom on imgs loaded
-				$(e).children("img").onImagesLoads(function () {
-					var component = {
-						uid: that.uid + "#" + i,
-						type: "zoom",
-						element: e,
-						$element: $(e)
-					};
-	
-					var configuration = {
-						context: $viewer,
-						onShow: function () {
-							this.width(size.width);
-							this.height(size.height);
-						}
-					};
-		
-					that.children.push(ch.zoom.call(component, configuration)["public"]);
-				});
-	
-			});
-		},
-
-	/**
-	* Creates all thumbnails and configure it as a Carousel.
-	* @private
-	* @function
-	* @name ch.Viewer#createThumbs
-	*/
-		createThumbs = function () {
-	
-			var structure = $("<ul class\"carousel\">");
-	
-			$.each($items, function (i, e) {
-	
-				var $thumb = $("<li>").bind("click", function (event) {
-					that.prevent(event);
-					that.move(i + 1);
-				});
-	
-				// Thumbnail
-				if ($(e).children("link[rel=thumb]").length > 0) {
-					$("<img src=\"" + $(e).children("link[rel=thumb]").attr("href") + "\">").appendTo($thumb);
-	
-				// Google Map
-				//} else if (ref.children("iframe").length > 0) {
-					// Do something...
-	
-				// Video
-				} else if ($(e).children("object").length > 0 || $(e).children("embed").length > 0) {
-					$thumb.addClass("ch-viewer-video").append("<span>Video</span>");
-				}
-	
-				structure.append($thumb);
-			});
-	
-			var self = {};
-	
-				self.children = structure.children();
-	
-				self.selected = 1;
-	
-				self.carousel = that.children[0] = $("<div class=\"ch-viewer-triggers\">")
-					.append(structure)
-					.appendTo($viewer)
-					.carousel({ width: viewerWidth });
-	
-			return self;
-		};
-
-	/**
-	* Moves the viewer's content.
-	* @private
-	* @function
-	* @name ch.Viewer#move
-	* @param {number} item
-	* @returns itself
-	*/
-		move = function (item) {
-			// Validation
-			if (item > itemsAmount || item < 1 || isNaN(item)) { return that; }
-	
-			// Visual config
-			$(thumbnails.children[thumbnails.selected - 1]).removeClass("ch-thumbnail-on"); // Disable thumbnail
-			$(thumbnails.children[item - 1]).addClass("ch-thumbnail-on"); // Enable next thumbnail
-	
-			// Move Display carousel
-			$display.page(item);
-	
-			// Move thumbnails carousel if item selected is in other page
-			var nextThumbsPage = Math.ceil(item / thumbnails.carousel.itemsPerPage());
-			if (thumbnails.carousel.page() !== nextThumbsPage) { thumbnails.carousel.page(nextThumbsPage); }
-	
-			// Buttons behavior
-			if (item > 1 && item < itemsAmount) {
-				arrows.prev.on();
-				arrows.next.on();
-			} else {
-				if (item === 1) { arrows.prev.off(); arrows.next.on(); }
-				if (item === itemsAmount) { arrows.next.off(); arrows.prev.on(); }
-			}
-	
-			// Refresh selected thumb
-			thumbnails.selected = item;
-	
-			/**
-			* Callback function
-			* @name ch.Viewer#onMove
-			* @event
-			*/
-			that.callbacks("onMove");
-			// new callback
-			that.trigger("move");
-	
-			return that;
-		};
-
-	/**
-	* Handles the visual behavior of arrows
-	* @private
-	* @name ch.Viewer#arrows
-	* @type object
-	*/
-		arrows = {};
-
-	arrows.prev = {
-		$element: $("<p class=\"ch-viewer-prev\">").bind("click", function () { that.prev(); }),
-		on: function () { arrows.prev.$element.addClass("ch-viewer-prev-on") },
-		off: function () { arrows.prev.$element.removeClass("ch-viewer-prev-on") }
-	};
-
-	arrows.next = {
-		$element: $("<p class=\"ch-viewer-next\">").bind("click", function () { that.next(); }),
-		on: function () { arrows.next.$element.addClass("ch-viewer-next-on") },
-		off: function () { arrows.next.$element.removeClass("ch-viewer-next-on") }
-	};
-
-/**
-*	Protected Members
-*/ 
-	
-	that.prev = function () {
-		that.move(thumbnails.selected - 1);
-
-		return that;
-	};
-	
-	that.next = function () {
-		that.move(thumbnails.selected + 1);
-
-		return that;
-	};
-
-/**
-*	Public Members
-*/
-
-	/**
-	* The component's instance unique identifier.
-	* @public
-	* @name ch.Viewer#uid
-	* @type number
-	*/
-
-	/**
-	* The element reference.
-	* @public
-	* @name ch.Viewer#element
-	* @type HTMLElement
-	*/
-
-	/**
-	* The component's type.
-	* @public
-	* @name ch.Viewer#type
-	* @type string
-	*/
-
-	/**
-	* Children instances associated to this controller.
-	* @public
-	* @name ch.Viewer#children
-	* @type Collection
-	*/
-	that["public"].children = that.children;
-
-	// Full behavior
-	if (itemsAmount > 1) {
-		/**
-		* Selects a specific viewer's child.
-		* @public
-		* @function
-		* @name ch.Viewer#moveTo 
-		* @param {Number} item Recieve a index to select a children.
-		*/
-		// TODO: This method should be called 'select'?
-		that["public"].moveTo = function (item) {
-			that.move(item);
-			
-			return that["public"];
-		};
-
-		/**
-		* Selects the next child available.
-		* @public
-		* @function
-		* @name ch.Viewer#next
-		*/
-		that["public"].next = function () {
-			that.next();
-			
-			return that["public"];
-		};
-
-		/**
-		* Selects the previous child available.
-		* @public
-		* @function
-		* @name ch.Viewer#prev
-		*/
-		that["public"].prev = function () {
-			that.prev();
-			
-			return that["public"];
-		};
-
-		/**
-		* Get the index of the selected child.
-		* @public
-		* @function
-		* @name ch.Viewer#getSelected
-		*/
-		that["public"].getSelected = function () { return thumbnails.selected; }; // Is this necesary???
-
-/**
-*	Default event delegation
-*/
-
-		// Create thumbnails
-		var thumbnails = createThumbs();
-		
-		// Create Viewer buttons
-		$viewer.append(arrows.prev.$element).append(arrows.next.$element);
-		
-		// Create movement method
-		that.move = move;
-		
-		// Move to the first item without callback
-		that.move(1);
-		
-		// Turn on Next arrow
-		arrows.next.on();
-	}
-
-	$viewer.find(".ch-mask").eq(0).height($($itemsChildren[0]).height());
-
-	// Initialize Zoom if there are anchors
-	if (ch.utils.hasOwn(ch, "zoom") && $itemsAnchor.length > 0) {
-		instanceZoom();
-	}
-
-	ch.utils.avoidTextSelection(that.element);
-
-	return that;
-};
-
-ch.factory("viewer");
-/**
-* Viewport is a reference to position and size of the visible area of browser.
-* @abstract
-* @name Viewport
-* @class Viewport
-* @standalone
-* @memberOf ch
-*/
-ch.viewport = {
-
-	/**
-	* Width of the visible area.
-	* @public
-	* @name ch.Viewport#width
-	* @type Number
-	*/
-	"width": ch.utils.window.width(),
-
-	/**
-	* Height of the visible area.
-	* @public
-	* @name ch.Viewport#height
-	* @type Number
-	*/
-	"height": ch.utils.window.height(),
-
-	/**
-	* Left offset of the visible area.
-	* @public
-	* @name ch.Viewport#left
-	* @type Number
-	*/
-	"left": ch.utils.window.scrollLeft(),
-
-	/**
-	* Top offset of the visible area.
-	* @public
-	* @name ch.Viewport#top
-	* @type Number
-	*/
-	"top": ch.utils.window.scrollTop(),
-
-	/**
-	* Right offset of the visible area.
-	* @public
-	* @name ch.Viewport#right
-	* @type Number
-	*/
-	"right": ch.utils.window.scrollLeft() + ch.utils.window.width(),
-
-	/**
-	* Bottom offset of the visible area.
-	* @public
-	* @name ch.Viewport#bottom
-	* @type Number
-	*/
-	"bottom": ch.utils.window.scrollTop() + ch.utils.window.height(),
-
-	/**
-	* Updates width and height of the visible area and updates ch.viewport.width and ch.viewport.height
-	* @public
-	* @function
-	* @name ch.Viewport#getSize
-	* @returns Size Object
-	*/
-	"getSize": function () {
-
-		return {
-			"width": this.width = ch.utils.window.width(),
-			"height": this.height = ch.utils.window.height()
-		};
-
-	},
-
-	/**
-	* Updates left, top, right and bottom offset of the visible area and updates respective ch.viewport properties.
-	* @public
-	* @function
-	* @name ch.Viewport#getOffset
-	* @returns Offset Object
-	*/
-	"getOffset": function () {
-
-		var size = this.getSize(),
-			scrollLeft = ch.utils.window.scrollLeft(),
-			scrollTop = ch.utils.window.scrollTop();
-
-		return {
-			"left": this.left = scrollLeft,
-			"top": this.top = scrollTop,
-			"right": this.right = scrollLeft + size.width,
-			"bottom": this.bottom = scrollTop + size.height
-		};
-		
-	}
-};/**
 * Watcher is a validation engine for html forms elements.
 * @name Watcher
 * @class Watcher
@@ -8882,12 +9123,12 @@ ch.watcher = function (conf) {
 	* @private
 	* @name ch.Watcher#validationEvent
 	*/
-	var validationEvent = (that.$element.hasClass("options") || that.element.tagName == "SELECT") ? "change" : "blur";
+	var validationEvent = (that.$element.hasClass("options") || that.$element.hasClass("ch-form-options") || that.element.tagName == "SELECT") ? "change" : "blur";
 
 	var hasError = function () {
 
 		// Pre-validation: Don't validate disabled
-		if (that.$element.attr('disabled') || !that.enabled) { return false; }
+		if (that.$element.attr('disabled') || !that.enabled) { return false; }
 
 		/**
 		* Triggers before start validation process.
@@ -8909,7 +9150,11 @@ ch.watcher = function (conf) {
 		var status = !gotError.status;
 
 		if (status) {
-			that.$element.addClass("error");
+
+			if (that.$element.prop("tagName") === "INPUT" || that.$element.prop("tagName") === "TEXTAREA") {
+				that.$element.addClass("error ch-form-error");
+			}
+
 			that.helper.show(gotError.msg || form.messages[gotError.condition] || "Error.");
 
 			// Add blur or change event only one time
@@ -8933,7 +9178,7 @@ ch.watcher = function (conf) {
 			that.trigger("error", gotError.condition);
 
 		} else {
-			that.$element.removeClass("error");
+			that.$element.removeClass("error ch-form-error");
 			that.helper.hide();
 		}
 
@@ -8958,7 +9203,7 @@ ch.watcher = function (conf) {
 
 	var clear = function() {
 
-		that.$element.removeClass("error");
+		that.$element.removeClass("error ch-form-error");
 		that.helper.hide();
 
 		// Don't work
@@ -9009,21 +9254,24 @@ ch.watcher = function (conf) {
 	that.$reference = (function() {
 		var reference;
 		// CHECKBOX, RADIO
-		if (that.$element.hasClass("options")) {
+		if (that.$element.hasClass("options") || that.$element.hasClass("ch-form-options")) {
 			// Helper reference from will be fired
 			// H4
-			if (that.$element.find('h4').length > 0) {
-				var h4 = that.$element.find('h4'); // Find h4
-					h4.wrapInner('<span>'); // Wrap content with inline element
+			if (that.$element.find("h4").length > 0) {
+				var h4 = that.$element.find("h4"); // Find h4
+					h4.wrapInner("<span>"); // Wrap content with inline element
 				reference = h4.children(); // Inline element in h4 like helper reference
 			// Legend
-			} else if (that.$element.prev().prop('tagName') == 'LEGEND') {
+			} else if (that.$element.prev().prop("tagName") == "LEGEND") {
 				reference = that.$element.prev(); // Legend like helper reference
+			} else {
+				reference = $(that.$element.find("label")[0]);
 			}
 		// INPUT, SELECT, TEXTAREA
 		} else {
 			reference = that.$element;
 		}
+
 		return reference;
 	})();
 
@@ -9104,7 +9352,7 @@ ch.watcher = function (conf) {
 	/**
 	* Clear all active validations.
 	* @public
-	* @name ch.Watcher#resset
+	* @name ch.Watcher#reset
 	* @function
 	* @returns itself
 	*/
@@ -9223,18 +9471,21 @@ ch.watcher = function (conf) {
 };
 ch.factory("watcher");
 /**
-* Zoom is a standalone UI component that shows a contextual reference to an augmented version of main declared image.
+* Zoom shows a contextual reference to an augmented version of main declared image.
 * @name Zoom
 * @class Zoom
 * @augments ch.Floats
+* @requires ch.Positioner
 * @requires ch.onImagesLoads
 * @memberOf ch
 * @param {Object} [conf] Object with configuration properties.
-* @param {Boolean} [conf.fx] Enable or disable UI effects. By default, the effects are enable.
-* @param {Boolean} [conf.context] Sets a reference to position and size of component that will be considered to carry out the position. By default is the viewport.
-* @param {String} [conf.points] Sets the points where component will be positioned, specified by configuration or centered by default: "cm cm".
-* @param {String} [conf.offset] Sets the offset in pixels that component will be displaced from original position determined by points. It's specified by configuration or zero by default: "0 0".
-* @param {Boolean} [conf.cache] Enable or disable the content cache. By default, the cache is enable.
+* @param {Boolean} [conf.fx] Enable or disable fade effect on show. By default, the effect are disabled.
+* @param {Boolean} [conf.context] Sets a reference to position of component that will be considered to carry out the position. By default is the anchor of HTML snippet.
+* @param {String} [conf.points] Sets the points where component will be positioned, specified by configuration or "lt rt" by default.
+* @param {String} [conf.offset] Sets the offset in pixels that component will be displaced from original position determined by points. It's specified by configuration or "20 0" by default.
+* @param {String} [conf.message] This message will be shown when component needs to communicate that is in process of load. It's "Loading zoom..." by default.
+* @param {Number} [conf.width] Width of floated area of zoomed image. Example: 500, "500px", "50%". Default: 350.
+* @param {Number} [conf.height] Height of floated area of zoomed image. Example: 500, "500px", "50%". Default: 350.
 * @returns itself
 * @see ch.Modal
 * @see ch.Tooltip
@@ -9254,17 +9505,27 @@ ch.zoom = function (conf) {
 *	Constructor
 */
 	conf = ch.clon(conf);
-	conf.fx = false;
 
+	conf.fx = conf.fx || false;
+	
+	conf.cache = false;
+
+	// WAI-ARIA
 	conf.aria = {};
 	conf.aria.role = "tooltip";
 	conf.aria.identifier = "aria-describedby";
 
+	// Position
 	conf.position = {};
 	conf.position.context = conf.context || that.$element;
 	conf.position.offset = conf.offset || "20 0";
 	conf.position.points = conf.points || "lt rt";
-	conf.position.hold = true;
+	conf.reposition = false;
+
+	// Transition message and size
+	conf.message = conf.message || "Loading zoom...";
+	conf.width = conf.width || 300;
+	conf.height = conf.height || 300;
 
 	that.conf = conf;
 
@@ -9280,139 +9541,334 @@ ch.zoom = function (conf) {
 */
 
 	/**
+	* Element showed before zoomed image is load. It's a transition message and its content can be configured through parameter "message".
+	* @private
+	* @name ch.Zoom#$loading
+	* @type Object
+	*/
+	var $loading = $("<p class=\"ch-zoom-loading loading ch-hide\">" + conf.message + "</p>").appendTo(that.$element),
+
+	/**
+	* Position of main anchor. It's for calculate cursor position hover the image.
+	* @private
+	* @name ch.Zoom#offset
+	* @type Object
+	*/
+		offset = that.$element.offset(),
+
+	/**
+	* Visual element that follows mouse movement for reference to zoomed area into original image.
+	* @private
+	* @name ch.Zoom#seeker
+	* @type Object
+	*/
+		seeker = {
+			/**
+			* Element shown as seeker.
+			* @private
+			* @name shape
+			* @memberOf ch.Zoom#seeker
+			* @type Object
+			*/
+			"$shape": $("<div class=\"ch-seeker ch-hide\">"),
+
+			/**
+			* Half of width of seeker element. It's only half to facilitate move calculations.
+			* @private
+			* @name width
+			* @memberOf ch.Zoom#seeker
+			* @type Number
+			*/
+			"width": 0,
+
+			/**
+			* Half of height of seeker element. It's only half to facilitate move calculations.
+			* @private
+			* @name height
+			* @memberOf ch.Zoom#seeker
+			* @type Number
+			*/
+			"height": 0
+		},
+
+	/**
 	* Reference to main image declared on HTML code snippet.
 	* @private
 	* @name ch.Zoom#original
-	* @type object
+	* @type Object
 	*/
-	var original = {};
-		original.img = that.$element.children();
-		original["width"] = original.img.prop("width");
-		original["height"] = original.img.prop("height");
+		original = (function () {
+			// Define the content source
+			var $img = that.$element.children("img");
+
+			// Grab some data when image loads
+			$img.onImagesLoads(function () {
+
+				// Grab size of original image
+				original.width = $img.prop("width");
+				original.height = $img.prop("height");
+
+				// Anchor size (same as image)
+				that.$element.css({
+					"width": original.width,
+					"height": original.height
+				});
+
+				// Loading position centered at anchor
+				$loading.css({
+					"left": (original.width - $loading.width()) / 2,
+					"top": (original.height - $loading.height()) / 2
+				});
+
+			});
+
+			return {
+				/**
+				* Reference to HTML Element of original image.
+				* @private
+				* @name img
+				* @memberOf ch.Zoom#original
+				* @type Object
+				*/
+				"$image": $img,
+
+				/**
+				* Position of original image relative to viewport.
+				* @private
+				* @name offset
+				* @memberOf ch.Zoom#original
+				* @type Object
+				*/
+				"offset": {},
+
+				/**
+				* Width of original image.
+				* @private
+				* @name width
+				* @memberOf ch.Zoom#original
+				* @type Number
+				*/
+				"width": 0,
+
+				/**
+				* Height of original image.
+				* @private
+				* @name height
+				* @memberOf ch.Zoom#original
+				* @type Number
+				*/
+				"height": 0
+			};
+		}()),
 
 	/**
-	* Reference to the augmented version of image, that will be displayed in context.
+	* Relative size between zoomed and original image.
+	* @private
+	* @name ch.Zoom#ratio
+	* @type Object
+	*/
+		ratio = {
+			/**
+			* Relative size of X axis.
+			* @private
+			* @name width
+			* @memberOf ch.Zoom#ratio
+			* @type Number
+			*/
+			"width": 0,
+
+			/**
+			* Relative size of Y axis.
+			* @private
+			* @name height
+			* @memberOf ch.Zoom#ratio
+			* @type Number
+			*/
+			"height": 0
+		},
+
+	/**
+	* Reference to the augmented version of image, that will be displayed into a floated element.
 	* @private
 	* @name ch.Zoom#zoomed
-	* @type object
+	* @type Object
 	*/
-	var zoomed = {};
-		// Define the content source 
-		zoomed.img = that.source = $("<img src=\"" + that.element.href + "\" alt=\"Zoomed image\">");
+		zoomed = (function () {
+			// Define the content source
+			var $img = that.source = $("<img src=\"" + that.element.href + "\">");
+
+			// Grab some data when zoomed image loads
+			$img.onImagesLoads(function () {
+
+				// Save the zoomed image size
+				zoomed.width = $img.prop("width");
+				zoomed.height = $img.prop("height");
+
+				// Save the zoom ratio
+				ratio.width = zoomed.width / original.width;
+				ratio.height = zoomed.height / original.height;
+
+				// Seeker: Size relative to zoomed image respect zoomed area
+				var w = ~~(conf.width / ratio.width),
+					h = ~~(conf.height / ratio.height);
+
+				// Seeker: Save half width and half height
+				seeker.width = w / 2;
+				seeker.height = h / 2;
+
+				// Seeker: Set size and append it
+				seeker.$shape.css({"width": w, "height": h}).appendTo(that.$element);
+
+				// Remove loading
+				$loading.remove();
+
+				// Change zoomed image status to Ready
+				zoomed.ready = true;
+
+				// TODO: MAGIC here! if mouse is over image show seeker and make all that innerShow do
+			});
+
+			return {
+				/**
+				* Reference to HTML Element of augmented image.
+				* @private
+				* @name img
+				* @memberOf ch.Zoom#zoomed
+				* @type Object
+				*/
+				"$image": $img,
+
+				/**
+				* Status of augmented image. When it's load, the status is "true".
+				* @private
+				* @name ready
+				* @memberOf ch.Zoom#zoomed
+				* @type Boolean
+				*/
+				"ready": false,
+
+				/**
+				* Width of augmented image.
+				* @private
+				* @name width
+				* @memberOf ch.Zoom#zoomed
+				* @type Number
+				*/
+				"width": 0,
+
+				/**
+				* Height of augmented image.
+				* @private
+				* @name height
+				* @memberOf ch.Zoom#zoomed
+				* @type Number
+				*/
+				"height": 0
+			};
+		}()),
 
 	/**
-	* Seeker is the visual element that follows mouse movement for referencing to zoomable area into original image.
-	* @private
-	* @name ch.Zoom#seeker
-	* @type object
-	*/
-	var seeker = {};
-		seeker.shape = $("<div class=\"ch-seeker ch-hide\">");
-
-	/**
-	* Gets the mouse position relative to original image position, and accordingly moves the zoomed image.
+	* Calculates movement limits and sets it to seeker and augmented image.
 	* @private
 	* @function
 	* @name ch.Zoom#move
-	* @param event event
+	* @param {Event} event Mouse event to take the cursor position.
 	*/
-	var move = function (event) {
+		move = function (event) {
 
-		// Cursor coordinates relatives to original image
-		var x = event.pageX - original.offset.left;
-		var y = event.pageY - original.offset.top;
+			var x, y;
 
-		// Seeker axis
-		var limit = {};
-			limit.left = parseInt(x - seeker["width"]);
-			limit.right = parseInt(x + seeker["width"]);
-			limit.top = parseInt(y - seeker["height"]);
-			limit.bottom = parseInt(y + seeker["height"]);
+			// Left side of seeker LESS THAN left side of image
+			if (event.pageX - seeker.width < offset.left) {
+				x = 0;
+			// Right side of seeker GREATER THAN right side of image
+			} else if (event.pageX + seeker.width > original.width + offset.left) {
+				x = original.width - (seeker.width * 2) - 2;
+			// Free move
+			} else {
+				x = event.pageX - offset.left - seeker.width;
+			}
 
-		// Horizontal: keep seeker into limits
-		if (limit.left >= 0 && limit.right < original["width"] - 1) {
-			zoomed.img.css("left", -((parseInt(zoomed["width"]* x) / original["width"]) - (conf.width / 2)));
-			seeker.shape.css("left", limit.left);
-		}
+			// Top side of seeker LESS THAN top side of image
+			if (event.pageY - seeker.height < offset.top) {
+				y = 0;
+			// Bottom side of seeker GREATER THAN bottom side of image
+			} else if (event.pageY + seeker.height > original.height + offset.top) {
+				y = original.height - (seeker.height * 2) - 2;
+			// Free move
+			} else {
+				y = event.pageY - offset.top - seeker.height;
+			}
 
-		// Vertical: keep seeker into limits
-		if (limit.top >= 0 && limit.bottom < original["height"] - 1) {
-			zoomed.img.css("top", -((parseInt(zoomed["height"]* y) / original["height"]) - (conf.height / 2)));
-			seeker.shape.css("top", limit.top);
-		}
+			// Move seeker
+			seeker.$shape.css({"left": x, "top": y});
 
-	};
+			// Move zoomed image
+			zoomed.$image.css({"left": (-ratio.width * x), "top": (-ratio.height * y)});
 
-	/**
-	* Calculates zoomed image sizes and adds event listeners to trigger of float element
-	* @private
-	* @function
-	* @name ch.Zoom#init
-	*/
-	var init = function () {
-		// Zoomed image size
-		zoomed["width"] = zoomed.img.prop("width");
-		zoomed["height"] = zoomed.img.prop("height");
-
-		// Anchor
-		that.$element
-			// Apend Seeker
-			.append(seeker.shape)
-
-			// Show
-			.bind("mouseenter", that.show)
-
-			// Hide
-			.bind("mouseleave", that.hide)
-	};
+		};
 
 /**
 *	Protected Members
 */
 
+	/**
+	* Inner show method. Attach the component's layout to the DOM tree and load defined content.
+	* @protected
+	* @name ch.Zoom#innerShow
+	* @function
+	* @returns itself
+	*/
 	that.innerShow = function () {
-		// Recalc offset of original image
-		original.offset = original.img.offset();
 
-		// Move
-		that.$element.bind("mousemove", function (event) {
-			move(event);
-		});
+		// If the component isn't loaded, show loading transition
+		if (!zoomed.ready) {
+			$loading.removeClass("ch-hide");
+			return that;
+		}
 
-		// Seeker
-		seeker.shape.removeClass("ch-hide");
+		// Update position of anchor here because Zoom can be inside a Carousel and its position updates
+		offset = that.$element.offset();
 
-		// Floats show
+		// Bind move calculations
+		that.$element.bind("mousemove", function (event) { move(event); });
+
+		// Show seeker
+		seeker.$shape.removeClass("ch-hide");
+
+		// Show float
 		that.parent.innerShow();
 
 		return that;
-	};
 
-	that.innerHide = function () {
-		// Move
-		that.$element.unbind("mousemove");
-
-		// Seeker
-		seeker.shape.addClass("ch-hide");
-
-		// Floats hide
-		that.parent.innerHide();
-
-		return that;
 	};
 
 	/**
-	* Triggered on anchor click, it prevents redirection to zoomed image file.
+	* Inner hide method. Hides the component's layout and detach it from DOM tree.
 	* @protected
+	* @name ch.Zoom#innerHide
 	* @function
-	* @name ch.Zoom#enlarge
-	* @param {mouseEvent} event
 	* @returns itself
 	*/
-	that.enlarge = function (event) {
-		that.prevent(event);
-		// Do what you want...
+	that.innerHide = function () {
+
+		// If the component isn't loaded, hide loading transition
+		if (!zoomed.ready) {
+			$loading.addClass("ch-hide");
+			return that;
+		}
+
+		// Unbind move calculations
+		that.$element.unbind("mousemove");
+
+		// Hide seeker
+		seeker.$shape.addClass("ch-hide");
+
+		// Hide float
+		that.parent.innerHide();
+
 		return that;
+
 	};
 
 	/**
@@ -9426,19 +9882,19 @@ ch.zoom = function (conf) {
 	*/
 	that.size = function (prop, data) {
 
+		// Seeker: Updates styles and size value
 		if (data) {
+			// Seeker: Size relative to zoomed image respect zoomed area
+			var size = ~~(data / ratio[prop]);
 
-			// Seeker: shape size relative to zoomed image respect zoomed area
-			var size = (original[prop] * data) / zoomed[prop];
-
-			// Seeker: sets shape size
-			seeker.shape[prop](size);
-
-			// Seeker: save shape half size for position it respect cursor
+			// Seeker: Save half width and half height
 			seeker[prop] = size / 2;
 
+			// Seeker: Set size
+			seeker.$shape.css(prop, size);
 		}
 
+		// Change float size
 		return that.parent.size(prop, data);
 	};
 
@@ -9468,11 +9924,10 @@ ch.zoom = function (conf) {
 	*/
 
 	/**
-	* Gets component content. To get the defined content just use the method without arguments, like 'me.content()'.
+	* Gets the Float component content.
 	* @public
 	* @name ch.Zoom#content
 	* @function
-	* @param {string} content Static content, DOM selector or URL. If argument is empty then will return the content.
 	* @returns {HTMLIMGElement}
 	* @example
 	* // Get the defined content
@@ -9481,7 +9936,7 @@ ch.zoom = function (conf) {
 	*/
 
 	that["public"].content = function () {
-		// Only on Zoom, it's limmited to be a getter
+		// Only on Zoom it's limmited to be a getter
 		return that.content();
 	};
 
@@ -9576,14 +10031,14 @@ ch.zoom = function (conf) {
 	that.$element
 		.addClass("ch-zoom-trigger")
 
-		// Size (same as image)
-		.css({"width": original["width"], "height": original["height"]})
+		// Prevent click
+		.bind("click", function (event) { that.prevent(event); })
 
-		// Enlarge
-		.bind("click", function (event) { that.enlarge(event); });
-	
-	// Initialize when zoomed image loads...
-	zoomed.img.onImagesLoads(init);
+		// Show component or loading transition
+		.bind("mouseenter", that.innerShow)
+
+		// Hide component or loading transition
+		.bind("mouseleave", that.innerHide);	
 
 	/**
 	* Triggers when component is visible.
@@ -9610,19 +10065,20 @@ ch.zoom = function (conf) {
 	*/
 
 	/**
-	* Triggers when the component is ready to use.
+	* Triggers when the component is ready to use (Since 0.8.0).
 	* @name ch.Zoom#ready
 	* @event
 	* @public
+	* @since 0.8.0
 	* @example
-	* // Following the first example, using 'me' as modal's instance controller:
+	* // Following the first example, using 'me' as zoom's instance controller:
 	* me.on("ready",function () {
 	*	this.show();
 	* });
 	*/
-	that.trigger("ready");
+	setTimeout(function () { that.trigger("ready"); }, 50);
 
 	return that;
 };
 
-ch.factory("zoom");;ch.init();})($);
+ch.factory("zoom");;ch.init();})(jQuery);

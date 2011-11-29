@@ -77,6 +77,7 @@ var userMovingControl = function(e) {
 			posy = e.data.posy;
 
 		if ( !o.pointers[id] ) {
+			createPointerControl(e);
 			return;
 		}
 
@@ -90,15 +91,19 @@ var userMovingControl = function(e) {
 };
 
 var clickedControl = function(e) {
-console.log('clicek pointer')
 
 	var id = e._id, w, h,
 		posx = e.data.posx,
 		posy = e.data.posy
 		type = e.event;
-console.log(type)
-	if ( !o.pointers[id] ) {
+		itemId = e.itemId;
+
+	if ( !o.pointers[id] ) {		
 		return;
+	}
+
+	if (itemId) {
+		$('#' + itemId).blink();
 	}
 
 	w = o.pointers[id].css('width').split('px').join('');
@@ -124,7 +129,7 @@ console.log(type)
 /**
  *	Sockets
  */
-	o.socket = io.connect('http://10.65.2.1:8080');
+	o.socket = io.connect('http://localhost');
 
 	// Connected
 	o.socket.on('connect', function (e) {
@@ -149,7 +154,8 @@ $(window).mousemove(function(e) {
 });
 // Mouse click
 var clicking = function(e) {
-	o.socket.emit("clicking", o._id, getMousePosition(e), e.type );
+	var itemId = $(e.target).parents('li').attr('id');
+	o.socket.emit("clicking", o._id, getMousePosition(e), e.type, itemId );
 };
 // Mousedown // Mouseup
 $(window).mousedown(clicking).mouseup(clicking);

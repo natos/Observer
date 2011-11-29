@@ -7,7 +7,9 @@ var fs = require('fs'),
 /**
 * app & basic data
 */
-var app = express.createServer(),
+var http = require('http'),
+	client = http.createClient(3000, 'localhost'),
+	app = express.createServer(),
 	data = { 
 		title: 'Observer', 
 		urls: [],
@@ -39,7 +41,6 @@ app.configure('development', function(){
 * Routing
 */
 app.get('/', function(req, res, next){
-	// render
 	data.ip = req.connection.remoteAddress;
 	res.render('index', data );	
 });
@@ -67,8 +68,8 @@ io.sockets.on('connection', function (socket) {
 		socket.broadcast.emit('user moving', { _id: _id, data: data });
 	});
 
-	socket.on('clicking', function(_id, data, event) {
-		socket.broadcast.emit('clicked', { _id: _id, data: data, event: event });
+	socket.on('clicking', function(_id, data, event, itemId) {
+		socket.broadcast.emit('clicked', { _id: _id, data: data, event: event, itemId: itemId });
 	});
 
 /**

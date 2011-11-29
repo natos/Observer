@@ -4,6 +4,7 @@ scr.js(['/js/socket.io.js']);
 scr.js(['/js/jquery.js'],
 	function() { 
 		scr.js(['/js/chico.js'
+,				'/js/app.js'
 ,				'/js/observer.js'],
 			function(){
 			});
