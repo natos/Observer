@@ -2,7 +2,7 @@ var fs = require('fs'),
 	util   = require('util'),
 	express = require('express'),
 	io = require('socket.io'),
-	port = process.argv[2] || 8080;
+	port = 13404;
 
 /**
 * app & basic data
